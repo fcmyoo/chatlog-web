@@ -5,17 +5,13 @@
   "author": "Chatlog Web Team",
   "license": "Apache-2.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "dev": "./scripts/start-ai.sh --dev",
     "start": "./scripts/start-ai.sh",
     "build": "npm run build:frontend && npm run build:ai-service",
     "build:frontend": "cd apps/frontend && npm run build",
     "build:ai-service": "cd apps/ai-service && npm run build || echo 'AI service build skipped'",
-    "install:all": "npm install && cd apps/frontend && npm install && cd ../ai-service && npm install",
+    "install:all": "pnpm install",
     "clean": "rm -rf apps/*/node_modules node_modules",
     "check": "./scripts/start-ai.sh --check",
     "lint": "cd apps/frontend && npm run lint"
