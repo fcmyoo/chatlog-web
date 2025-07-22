@@ -1,0 +1,11 @@
+{
+  "name": "@chatlog/shared",
+  "version": "1.0.0",
+  "description": "共享类型定义和工具函数",
+  "main": "index.ts",
+  "types": "index.ts",
+  "private": true,
+  "keywords": ["chatlog", "shared", "types", "utils"],
+  "author": "Chatlog Web Team",
+  "license": "Apache-2.0"
+}
