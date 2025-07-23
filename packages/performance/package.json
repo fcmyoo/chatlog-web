@@ -1,0 +1,26 @@
+{
+  "name": "@chatlog/performance",
+  "version": "1.0.0",
+  "description": "高性能请求队列和缓存系统",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "benchmark": "node benchmark/performance-test.js"
+  },
+  "dependencies": {
+    "events": "^3.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
+  },
+  "keywords": [
+    "performance",
+    "queue",
+    "cache",
+    "optimization",
+    "middleware"
+  ],
+  "author": "Chatlog Team",
+  "license": "MIT"
+}

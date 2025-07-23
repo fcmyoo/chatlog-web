@@ -1,0 +1,20 @@
+{
+  "analysisHistory": {
+    "directory": "./storage/analysis_history",
+    "maxFiles": 1000,
+    "maxFileSize": 10485760,
+    "compression": true,
+    "cleanup": {
+      "enabled": true,
+      "maxAge": 2592000000,
+      "schedule": "0 2 * * *"
+    }
+  },
+  "cache": {
+    "provider": "memory",
+    "memory": {
+      "maxSize": 100,
+      "ttl": 300000
+    }
+  }
+}

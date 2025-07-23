@@ -1,0 +1,35 @@
+{
+  "provider": "deepseek",
+  "models": {
+    "openai": {
+      "apiKey": "",
+      "model": "gpt-4",
+      "baseURL": "https://api.openai.com/v1",
+      "maxTokens": 4096,
+      "temperature": 0.7,
+      "timeout": 60000
+    },
+    "gemini": {
+      "apiKey": "",
+      "model": "gemini-1.5-pro",
+      "baseURL": "https://generativelanguage.googleapis.com/v1beta",
+      "maxTokens": 8192,
+      "temperature": 0.9,
+      "timeout": 60000
+    },
+    "deepseek": {
+      "apiKey": "",
+      "model": "deepseek-reasoner",
+      "baseURL": "https://api.deepseek.com/v1",
+      "maxTokens": 64000,
+      "temperature": 1.0,
+      "timeout": 300000
+    }
+  },
+  "analysis": {
+    "systemPrompt": "你是一个专业的数据分析师和前端开发工程师。请根据提供的聊天数据，生成一个完整的、可直接运行的HTML页面。\n\n要求：\n1. HTML页面必须完整，包含DOCTYPE、html、head、body等标签\n2. CSS样式直接写在<style>标签内\n3. JavaScript代码直接写在<script>标签内\n4. 使用CDN引入必要的图表库（如Chart.js、D3.js等）\n5. 页面要美观、专业、响应式\n6. 包含真实的数据分析和可视化\n7. 不要使用任何外部文件引用\n8. 使用暖色系设计风格\n\n直接返回完整的HTML代码，不要有任何其他说明文字。",
+    "retryAttempts": 3,
+    "retryDelay": 5000,
+    "maxConcurrentAnalysis": 2
+  }
+}

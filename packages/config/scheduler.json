@@ -1,0 +1,18 @@
+{
+  "enabled": false,
+  "jobs": {
+    "analysis": {
+      "enabled": false,
+      "schedule": "0 0 8 * * *",
+      "maxConcurrent": 2,
+      "timeout": 3600000,
+      "retryAttempts": 2,
+      "retryDelay": 60000
+    },
+    "cleanup": {
+      "enabled": true,
+      "schedule": "0 2 * * *",
+      "maxAge": 2592000000
+    }
+  }
+}

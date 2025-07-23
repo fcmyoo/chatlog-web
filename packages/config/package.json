@@ -4,6 +4,9 @@
   "description": "统一服务配置管理",
   "main": "services.js",
   "private": true,
+  "dependencies": {
+    "joi": "^17.11.0"
+  },
   "keywords": ["chatlog", "config", "services"],
   "author": "Chatlog Web Team",
   "license": "Apache-2.0"

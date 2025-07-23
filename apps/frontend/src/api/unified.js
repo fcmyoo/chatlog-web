@@ -258,31 +258,31 @@ export default {
   
   // 开始分析
   async startAnalysis(data) {
-    const response = await aiAPI.post(isDevelopment ? '/ai-api/analyze' : '/api/ai/analyze', data)
+    const response = await aiAPI.post('/ai-api/analysis', data)
     return response.data
   },
 
   // 获取分析历史
   async getAnalysisHistory(params = {}) {
-    const response = await aiAPI.get(isDevelopment ? '/ai-api/history' : '/api/ai/history', { params })
+    const response = await aiAPI.get('/ai-api/history', { params })
     return response.data
   },
 
   // 删除分析记录
   async deleteAnalysis(analysisId) {
-    const response = await aiAPI.delete(isDevelopment ? `/ai-api/history/${analysisId}` : `/api/ai/history/${analysisId}`)
+    const response = await aiAPI.delete(`/ai-api/history/${analysisId}`)
     return response.data
   },
 
   // 获取可用模型
   async getAvailableModels() {
-    const response = await aiAPI.get(isDevelopment ? '/ai-api/models' : '/api/ai/models')
+    const response = await aiAPI.get('/ai-api/models/config')
     return response.data
   },
 
   // 测试连接
   async testConnection() {
-    const response = await aiAPI.get(isDevelopment ? '/ai-api/test' : '/api/ai/test')
+    const response = await aiAPI.get('/ai-api/models/test')
     return response.data
   },
 

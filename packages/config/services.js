@@ -52,7 +52,7 @@ const proxyConfig = {
   '/api': {
     target: services.chatlog.baseURL,
     changeOrigin: true,
-    ws: true,
+    ws: true, // 支持WebSocket
     pathRewrite: {
       '^/api': '/api'
     }
@@ -60,6 +60,7 @@ const proxyConfig = {
   '/ai-api': {
     target: services.ai.baseURL,
     changeOrigin: true,
+    ws: true, // 支持WebSocket
     pathRewrite: {
       '^/ai-api': '/api/ai'
     }

@@ -177,8 +177,8 @@ dev_mode() {
     log_step "开发模式启动..."
     
     # 创建开发环境的环境变量
-    if [ ! -f "server/.env" ]; then
-        cp .env.ai server/.env
+    if [ ! -f "apps/ai-service/.env" ]; then
+        cp .env.ai apps/ai-service/.env
     fi
     
     # 使用nodemon启动后端
@@ -187,11 +187,11 @@ dev_mode() {
             --names "🎨前端,🤖AI服务" \
             --prefix "[{name}]" \
             --prefix-colors "cyan,magenta" \
-            "npm run serve" \
-            "cd server && npm run dev"
+            "cd apps/frontend && npm run serve" \
+            "cd apps/ai-service && npm run dev"
     else
-        npm run serve &
-        cd server && npm run dev &
+        cd apps/frontend && npm run serve &
+        cd apps/ai-service && npm run dev &
         wait
     fi
 }

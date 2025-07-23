@@ -1,61 +1,209 @@
 const axios = require('axios');
 const ConfigManager = require('../config/ConfigManager');
 
-class DataService {
+/**
+ * 缓存管理器
+ * 实现智能缓存策略，减少对chatlog服务的重复调用
+ */
+class CacheManager {
   constructor() {
-    this.configManager = new ConfigManager();
+    this.cache = new Map();
+    this.cacheTimeout = 5 * 60 * 1000; // 5分钟缓存
+    this.maxCacheSize = 100; // 最大缓存条目数
   }
 
   /**
-   * 获取聊天数据
+   * 生成缓存键
    */
-  async getChatData(groupName, timeRange = '2024-01-01~2025-12-31') {
+  generateKey(groupName, timeRange, limit = 10000) {
+    return `${groupName}:${timeRange}:${limit}`;
+  }
+
+  /**
+   * 获取缓存数据
+   */
+  get(key) {
+    const item = this.cache.get(key);
+    if (!item) return null;
+
+    // 检查是否过期
+    if (Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    console.log(`🎯 缓存命中: ${key}`);
+    return item.data;
+  }
+
+  /**
+   * 设置缓存数据
+   */
+  set(key, data) {
+    // 如果缓存已满，删除最旧的条目
+    if (this.cache.size >= this.maxCacheSize) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+      console.log(`🗑️ 缓存已满，删除最旧条目: ${firstKey}`);
+    }
+
+    this.cache.set(key, {
+      data,
+      expiry: Date.now() + this.cacheTimeout,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log(`💾 缓存数据: ${key}, 过期时间: ${new Date(Date.now() + this.cacheTimeout).toLocaleString()}`);
+  }
+
+  /**
+   * 清除缓存
+   */
+  clear() {
+    this.cache.clear();
+    console.log('🧹 缓存已清除');
+  }
+
+  /**
+   * 获取缓存统计信息
+   */
+  getStats() {
+    return {
+      size: this.cache.size,
+      maxSize: this.maxCacheSize,
+      timeout: this.cacheTimeout,
+      keys: Array.from(this.cache.keys())
+    };
+  }
+}
+
+/**
+ * 优化的数据服务
+ * 实现智能缓存和批处理优化
+ */
+class DataService {
+  constructor() {
+    this.configManager = new ConfigManager();
+    this.cacheManager = new CacheManager();
+    this.requestQueue = new Map(); // 请求去重队列
+  }
+
+  /**
+   * 获取聊天数据（带缓存）
+   */
+  async getChatData(groupName, timeRange = '2024-01-01~2025-12-31', limit = 10000) {
+    const cacheKey = this.cacheManager.generateKey(groupName, timeRange, limit);
+    
+    // 检查缓存
+    const cachedData = this.cacheManager.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    // 检查是否有相同的请求正在进行（请求去重）
+    if (this.requestQueue.has(cacheKey)) {
+      console.log(`⏳ 等待进行中的请求: ${cacheKey}`);
+      return await this.requestQueue.get(cacheKey);
+    }
+
     try {
-      const config = this.configManager.getChatlogConfig();
-      const [startDate, endDate] = timeRange.split('~');
+      // 创建请求Promise并添加到队列
+      const requestPromise = this._fetchChatData(groupName, timeRange, limit);
+      this.requestQueue.set(cacheKey, requestPromise);
 
-      console.log(`📡 正在从Chatlog API获取数据...`);
-      console.log(`🔍 群聊: ${groupName}, 时间范围: ${timeRange}`);
+      console.log(`📡 从Chatlog API获取数据: ${groupName} (${timeRange})`);
+      const chatData = await requestPromise;
 
-      // 构建请求参数
-      const params = {
-        talker: groupName,
-        start_time: startDate,
-        end_time: endDate,
-        limit: 10000 // 限制返回数量，避免数据过大
-      };
+      // 缓存结果
+      this.cacheManager.set(cacheKey, chatData);
 
-      // 调用Chatlog API
-      const response = await axios.get(`${config.baseURL}/api/v1/chatlog`, {
-        params,
-        timeout: config.timeout,
-        headers: {
-          'Accept': 'text/plain,application/json'
-        }
-      });
-
-      console.log(`📊 API响应状态: ${response.status}`);
-      console.log(`📝 响应数据类型: ${typeof response.data}`);
-
-      // 解析聊天数据
-      const chatData = this.parseChatData(response.data, groupName);
-      
-      console.log(`✅ 成功解析 ${chatData.length} 条聊天记录`);
       return chatData;
 
     } catch (error) {
       console.error('获取聊天数据失败:', error.message);
-      
-      if (error.code === 'ECONNREFUSED') {
-        throw new Error('无法连接到Chatlog服务，请确认服务是否正在运行 (端口5030)');
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('请求超时，请检查网络连接或缩小查询范围');
-      } else if (error.response?.status === 404) {
-        throw new Error('找不到指定的群聊数据，请检查群聊名称是否正确');
-      } else {
-        throw new Error(`数据获取失败: ${error.message}`);
-      }
+      throw error;
+    } finally {
+      // 移除请求队列中的Promise
+      this.requestQueue.delete(cacheKey);
     }
+  }
+
+  /**
+   * 实际的数据获取方法
+   */
+  async _fetchChatData(groupName, timeRange, limit) {
+    const config = this.configManager.getChatlogConfig();
+    const [startDate, endDate] = timeRange.split('~');
+
+    // 构建请求参数
+    const params = {
+      talker: groupName,
+      start_time: startDate,
+      end_time: endDate,
+      limit: limit
+    };
+
+    // 调用Chatlog API
+    const response = await axios.get(`${config.baseURL}/api/v1/chatlog`, {
+      params,
+      timeout: config.timeout,
+      headers: {
+        'Accept': 'text/plain,application/json'
+      }
+    });
+
+    console.log(`📊 API响应状态: ${response.status}`);
+    console.log(`📝 响应数据类型: ${typeof response.data}`);
+
+    // 解析聊天数据
+    const chatData = this.parseChatData(response.data, groupName);
+    
+    console.log(`✅ 成功解析 ${chatData.length} 条聊天记录`);
+    return chatData;
+  }
+
+  /**
+   * 批量获取多个时间段的数据
+   */
+  async getChatDataBatch(groupName, timeRanges) {
+    const promises = timeRanges.map(timeRange => 
+      this.getChatData(groupName, timeRange)
+    );
+
+    try {
+      const results = await Promise.all(promises);
+      
+      // 合并所有数据并按时间排序
+      const mergedData = results.flat().sort((a, b) => 
+        new Date(a.time) - new Date(b.time)
+      );
+
+      console.log(`🔄 批量获取完成，合并 ${mergedData.length} 条记录`);
+      return mergedData;
+
+    } catch (error) {
+      console.error('批量获取数据失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 预加载常用数据
+   */
+  async preloadCommonData(groupNames, defaultTimeRange = '2024-01-01~2025-12-31') {
+    console.log('🚀 开始预加载常用数据...');
+    
+    const preloadPromises = groupNames.map(async (groupName) => {
+      try {
+        await this.getChatData(groupName, defaultTimeRange);
+        console.log(`✅ 预加载完成: ${groupName}`);
+      } catch (error) {
+        console.warn(`⚠️ 预加载失败: ${groupName} - ${error.message}`);
+      }
+    });
+
+    await Promise.allSettled(preloadPromises);
+    console.log('🎯 预加载任务完成');
   }
 
   /**
@@ -79,34 +227,12 @@ class DataService {
         textData = JSON.stringify(rawData);
       }
     } else if (typeof rawData !== 'string') {
-      console.warn('数据类型异常，尝试转换为字符串');
+      console.warn('数据类型异常，尝试转换为字符串', typeof rawData);
       textData = String(rawData);
     }
 
-    return this.parseTextData(textData, groupName);
-  }
-
-  /**
-   * 规范化数组数据
-   */
-  normalizeArrayData(data, groupName) {
-    return data.map(item => ({
-      senderName: item.senderName || item.sender || item.from || '未知用户',
-      senderId: item.senderId || item.id || '',
-      content: item.content || item.message || item.text || '',
-      time: item.time || item.timestamp || item.date || new Date().toISOString(),
-      timestamp: item.timestamp || new Date(item.time || Date.now()).getTime(),
-      talkerName: groupName,
-      groupName: groupName
-    }));
-  }
-
-  /**
-   * 解析文本格式数据
-   */
-  parseTextData(textData, groupName) {
     const lines = textData.trim().split('\n');
-    const chatData = [];
+    const chatLogs = [];
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -116,267 +242,83 @@ class DataService {
         if (match) {
           const [, senderName, senderId, time] = match;
           let content = '';
-
+          
           // 读取消息内容（下一行）
           if (i + 1 < lines.length) {
             content = lines[i + 1].trim();
             i++; // 跳过内容行
           }
-
-          // 过滤掉空内容或系统消息
-          if (content && !this.isSystemMessage(content)) {
-            chatData.push({
-              senderName: senderName.trim(),
-              senderId: senderId.trim(),
-              time: time.trim(),
-              content: content,
-              timestamp: this.parseTimestamp(time.trim()),
-              talkerName: groupName,
-              groupName: groupName
-            });
-          }
-        }
-      }
-    }
-
-    return chatData;
-  }
-
-  /**
-   * 判断是否为系统消息
-   */
-  isSystemMessage(content) {
-    const systemPatterns = [
-      /^\[系统消息\]/,
-      /^系统:/,
-      /撤回了一条消息/,
-      /加入了群聊/,
-      /退出了群聊/,
-      /^拍了拍/,
-      /^@所有人/
-    ];
-
-    return systemPatterns.some(pattern => pattern.test(content));
-  }
-
-  /**
-   * 解析时间戳
-   */
-  parseTimestamp(timeString) {
-    try {
-      const date = new Date(timeString);
-      return isNaN(date.getTime()) ? Date.now() : date.getTime();
-    } catch (error) {
-      console.warn('时间解析失败:', timeString);
-      return Date.now();
-    }
-  }
-
-  /**
-   * 获取群聊列表
-   */
-  async getChatrooms() {
-    try {
-      const config = this.configManager.getChatlogConfig();
-      
-      console.log('📡 获取群聊列表...');
-      
-      const response = await axios.get(`${config.baseURL}/api/v1/chatroom`, {
-        timeout: config.timeout
-      });
-
-      const chatrooms = this.parseChatrooms(response.data);
-      console.log(`✅ 获取到 ${chatrooms.length} 个群聊`);
-      
-      return chatrooms;
-
-    } catch (error) {
-      console.error('获取群聊列表失败:', error.message);
-      throw new Error(`获取群聊列表失败: ${error.message}`);
-    }
-  }
-
-  /**
-   * 解析群聊数据
-   */
-  parseChatrooms(rawData) {
-    if (!rawData || typeof rawData !== 'string') {
-      console.warn('群聊数据格式异常');
-      return [];
-    }
-
-    const lines = rawData.trim().split('\n');
-    if (lines.length < 2) return [];
-
-    const headers = lines[0].split(',').map(h => h.trim());
-    const chatrooms = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
-      const room = {};
-
-      headers.forEach((header, index) => {
-        room[header] = values[index] || '';
-      });
-
-      if (room.nickname || room.name) {
-        chatrooms.push({
-          id: room.username || room.id || '',
-          name: room.nickname || room.name || '未知群聊',
-          displayName: room.nickname || room.name || '未知群聊',
-          username: room.username || '',
-          memberCount: parseInt(room.member_count) || 0
-        });
-      }
-    }
-
-    return chatrooms;
-  }
-
-  /**
-   * 获取联系人列表
-   */
-  async getContacts() {
-    try {
-      const config = this.configManager.getChatlogConfig();
-      
-      console.log('📡 获取联系人列表...');
-      
-      const response = await axios.get(`${config.baseURL}/api/v1/contact`, {
-        timeout: config.timeout
-      });
-
-      const contacts = this.parseContacts(response.data);
-      console.log(`✅ 获取到 ${contacts.length} 个联系人`);
-      
-      return contacts;
-
-    } catch (error) {
-      console.error('获取联系人列表失败:', error.message);
-      throw new Error(`获取联系人列表失败: ${error.message}`);
-    }
-  }
-
-  /**
-   * 解析联系人数据
-   */
-  parseContacts(rawData) {
-    if (!rawData || typeof rawData !== 'string') {
-      console.warn('联系人数据格式异常');
-      return [];
-    }
-
-    const lines = rawData.trim().split('\n');
-    if (lines.length < 2) return [];
-
-    const headers = lines[0].split(',').map(h => h.trim());
-    const contacts = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
-      const contact = {};
-
-      headers.forEach((header, index) => {
-        contact[header] = values[index] || '';
-      });
-
-      if (contact.nickname || contact.remark) {
-        contacts.push({
-          id: contact.username || contact.id || '',
-          name: contact.remark || contact.nickname || '未知联系人',
-          nickname: contact.nickname || '',
-          remark: contact.remark || '',
-          username: contact.username || ''
-        });
-      }
-    }
-
-    return contacts;
-  }
-
-  /**
-   * 获取会话列表
-   */
-  async getSessions() {
-    try {
-      const config = this.configManager.getChatlogConfig();
-      
-      console.log('📡 获取会话列表...');
-      
-      const response = await axios.get(`${config.baseURL}/api/v1/session`, {
-        timeout: config.timeout
-      });
-
-      const sessions = this.parseSessions(response.data);
-      console.log(`✅ 获取到 ${sessions.length} 个会话`);
-      
-      return sessions;
-
-    } catch (error) {
-      console.error('获取会话列表失败:', error.message);
-      throw new Error(`获取会话列表失败: ${error.message}`);
-    }
-  }
-
-  /**
-   * 解析会话数据
-   */
-  parseSessions(rawData) {
-    if (!rawData || typeof rawData !== 'string') {
-      console.warn('会话数据格式异常');
-      return [];
-    }
-
-    const lines = rawData.trim().split('\n').filter(line => line.trim());
-    const sessions = [];
-
-    for (const line of lines) {
-      if (line.trim()) {
-        // 解析格式：群名称(群ID) 时间
-        const match = line.match(/^(.+?)\((.+?)\)\s+(.+)$/);
-        if (match) {
-          const [, name, id, lastMessageTime] = match;
-          sessions.push({
-            id: id.trim(),
-            name: name.trim(),
-            displayName: name.trim(),
-            lastMessageTime: lastMessageTime.trim(),
-            timestamp: this.parseTimestamp(lastMessageTime.trim())
+          
+          chatLogs.push({
+            senderName: senderName.trim(),
+            senderId: senderId.trim(),
+            time: time.trim(),
+            content: content,
+            timestamp: new Date(time.trim()).getTime(),
+            groupName: groupName,
+            talkerName: groupName
           });
         }
       }
     }
 
-    return sessions.sort((a, b) => b.timestamp - a.timestamp);
+    return chatLogs;
   }
 
   /**
-   * 测试Chatlog连接
+   * 规范化数组数据
    */
-  async testConnection() {
+  normalizeArrayData(arrayData, groupName) {
+    return arrayData.map(item => ({
+      ...item,
+      groupName: groupName,
+      talkerName: groupName,
+      timestamp: item.timestamp || new Date(item.time).getTime()
+    }));
+  }
+
+  /**
+   * 获取缓存统计信息
+   */
+  getCacheStats() {
+    return {
+      cache: this.cacheManager.getStats(),
+      requestQueue: {
+        size: this.requestQueue.size,
+        keys: Array.from(this.requestQueue.keys())
+      }
+    };
+  }
+
+  /**
+   * 清除所有缓存
+   */
+  clearCache() {
+    this.cacheManager.clear();
+  }
+
+  /**
+   * 健康检查
+   */
+  async healthCheck() {
     try {
       const config = this.configManager.getChatlogConfig();
-      
-      console.log('🔗 测试Chatlog连接...');
-      
       const response = await axios.get(`${config.baseURL}/api/v1/session`, {
         timeout: 5000
       });
 
       return {
-        success: true,
-        message: 'Chatlog连接成功',
-        baseURL: config.baseURL,
-        status: response.status
+        status: 'healthy',
+        chatlogService: 'connected',
+        responseTime: response.headers['x-response-time'] || 'unknown',
+        cacheStats: this.getCacheStats()
       };
-
     } catch (error) {
-      console.error('Chatlog连接测试失败:', error.message);
-      
       return {
-        success: false,
+        status: 'unhealthy',
+        chatlogService: 'disconnected',
         error: error.message,
-        baseURL: this.configManager.getChatlogConfig().baseURL
+        cacheStats: this.getCacheStats()
       };
     }
   }

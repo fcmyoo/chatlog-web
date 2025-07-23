@@ -1,0 +1,25 @@
+{
+  "healthCheck": {
+    "enabled": true,
+    "interval": 30000,
+    "timeout": 5000,
+    "endpoints": []
+  },
+  "metrics": {
+    "enabled": false,
+    "provider": "prometheus",
+    "port": 9090,
+    "path": "/metrics"
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "format": "text",
+    "file": {
+      "enabled": false,
+      "path": "./logs/app.log",
+      "maxSize": 10485760,
+      "maxFiles": 5
+    }
+  }
+}

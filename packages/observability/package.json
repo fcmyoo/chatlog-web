@@ -1,0 +1,27 @@
+{
+  "name": "@chatlog/observability",
+  "version": "1.0.0",
+  "description": "统一的可观测性系统：日志、监控和错误追踪",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "benchmark": "node benchmark/observability-test.js"
+  },
+  "dependencies": {
+    "events": "^3.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
+  },
+  "keywords": [
+    "observability",
+    "logging",
+    "monitoring",
+    "error-tracking",
+    "metrics",
+    "health-check"
+  ],
+  "author": "Chatlog Team",
+  "license": "MIT"
+}

@@ -7,10 +7,28 @@ module.exports = defineConfig({
   // 开发服务器配置
   devServer: {
     port: services.frontend.port,
-    host: '0.0.0.0',
+    host: 'localhost',
     https: services.frontend.protocol === 'https',
     open: true,
-    proxy: proxyConfig
+    proxy: proxyConfig,
+    // WebSocket配置 - 修复热重载连接问题
+    webSocketServer: 'ws',
+    client: {
+      // 确保WebSocket连接使用正确的地址
+      webSocketURL: {
+        hostname: 'localhost',
+        pathname: '/ws',
+        port: services.frontend.port,
+        protocol: 'ws'
+      },
+      // 显示覆盖层错误信息
+      overlay: {
+        errors: true,
+        warnings: false
+      }
+    },
+    // 允许从任何主机访问
+    allowedHosts: 'all'
   },
   
   // 生产环境配置

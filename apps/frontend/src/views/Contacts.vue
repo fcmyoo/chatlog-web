@@ -77,7 +77,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import api from '@/api'
+import api from '@/api/ApiClient'
 
 export default {
   name: 'Contacts',

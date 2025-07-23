@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// 导入统一服务配置
-const { services, getServiceUrl } = require('../../../packages/config/services');
+// 导入统一配置管理器
+const { getGlobalConfig } = require('../../../packages/config/index');
 
 class ConfigManager {
   constructor() {
@@ -12,6 +12,9 @@ class ConfigManager {
     
     // 确保配置目录存在
     this.ensureConfigDir();
+    
+    // 获取全局配置管理器
+    this.globalConfig = getGlobalConfig();
   }
 
   ensureConfigDir() {
@@ -156,8 +159,8 @@ class ConfigManager {
    */
   getChatlogConfig() {
     return {
-      baseURL: getServiceUrl('chatlog'),
-      timeout: services.chatlog.timeout || 10000
+      baseURL: this.globalConfig.get('services.chatlog.baseURL') || 'http://127.0.0.1:5030',
+      timeout: this.globalConfig.get('services.chatlog.timeout', 10000)
     };
   }
 
