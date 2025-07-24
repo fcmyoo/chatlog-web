@@ -14,7 +14,12 @@
     "install:all": "pnpm install",
     "clean": "rm -rf apps/*/node_modules node_modules",
     "check": "./scripts/start-ai.sh --check",
-    "lint": "cd apps/frontend && npm run lint"
+    "lint": "cd apps/frontend && npm run lint",
+    "test": "npm run test:frontend && npm run test:ai-service",
+    "test:frontend": "cd apps/frontend && npm run test",
+    "test:ai-service": "cd apps/ai-service && npm run test",
+    "test:watch": "concurrently \"npm run test:frontend -- --watch\" \"npm run test:ai-service -- --watch\"",
+    "test:coverage": "npm run test:frontend -- --coverage && npm run test:ai-service -- --coverage"
   },
   "repository": {
     "type": "git",

@@ -13,29 +13,29 @@ export default createStore({
     total: 0
   },
   mutations: {
-    SET_LOADING(state, loading) {
+    SET_LOADING (state, loading) {
       state.loading = loading
     },
-    SET_CONTACTS(state, contacts) {
+    SET_CONTACTS (state, contacts) {
       state.contacts = contacts
     },
-    SET_CHATROOMS(state, chatrooms) {
+    SET_CHATROOMS (state, chatrooms) {
       state.chatrooms = chatrooms
     },
-    SET_SESSIONS(state, sessions) {
+    SET_SESSIONS (state, sessions) {
       state.sessions = sessions
     },
-    SET_CHAT_LOGS(state, logs) {
+    SET_CHAT_LOGS (state, logs) {
       state.chatLogs = logs
     },
-    SET_PAGINATION(state, { page, pageSize, total }) {
+    SET_PAGINATION (state, { page, pageSize, total }) {
       state.currentPage = page
       state.pageSize = pageSize
       state.total = total
     }
   },
   actions: {
-    async fetchContacts({ commit }) {
+    async fetchContacts ({ commit }) {
       commit('SET_LOADING', true)
       try {
         const response = await api.getContacts()
@@ -46,7 +46,7 @@ export default createStore({
         commit('SET_LOADING', false)
       }
     },
-    async fetchChatrooms({ commit }) {
+    async fetchChatrooms ({ commit }) {
       commit('SET_LOADING', true)
       try {
         const response = await api.getChatrooms()
@@ -57,7 +57,7 @@ export default createStore({
         commit('SET_LOADING', false)
       }
     },
-    async fetchSessions({ commit }) {
+    async fetchSessions ({ commit }) {
       commit('SET_LOADING', true)
       try {
         const response = await api.getSessions()
@@ -68,7 +68,7 @@ export default createStore({
         commit('SET_LOADING', false)
       }
     },
-    async fetchChatLogs({ commit, state }, params) {
+    async fetchChatLogs ({ commit, state }, params) {
       commit('SET_LOADING', true)
       try {
         const response = await api.getChatLogs({
@@ -101,4 +101,4 @@ export default createStore({
       total: state.total
     })
   }
-}) 
+})

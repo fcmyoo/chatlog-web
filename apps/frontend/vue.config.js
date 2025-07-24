@@ -3,7 +3,7 @@ const { proxyConfig, services } = require('../../packages/config/services')
 
 module.exports = defineConfig({
   transpileDependencies: true,
-  
+
   // 开发服务器配置
   devServer: {
     port: services.frontend.port,
@@ -30,12 +30,12 @@ module.exports = defineConfig({
     // 允许从任何主机访问
     allowedHosts: 'all'
   },
-  
+
   // 生产环境配置
   publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
   outputDir: 'dist',
   assetsDir: 'static',
-  
+
   // 链式操作配置
   chainWebpack: config => {
     // 设置页面标题
@@ -43,7 +43,7 @@ module.exports = defineConfig({
       args[0].title = '聊天记录管理系统'
       return args
     })
-    
+
     // 优化分包
     config.optimization.splitChunks({
       chunks: 'all',
@@ -63,18 +63,18 @@ module.exports = defineConfig({
       }
     })
   },
-  
+
   // CSS 配置
   css: {
     extract: process.env.NODE_ENV === 'production',
     sourceMap: false,
     loaderOptions: {
       scss: {
-        additionalData: `@import "@/styles/variables.scss";`
+        additionalData: '@import "@/styles/variables.scss";'
       }
     }
   },
-  
+
   // PWA 配置（可选）
   pwa: {
     name: '聊天记录管理系统',
@@ -84,11 +84,11 @@ module.exports = defineConfig({
       background_color: '#409eff'
     }
   },
-  
+
   // 性能优化
   configureWebpack: {
     optimization: {
       minimize: process.env.NODE_ENV === 'production'
     }
   }
-}) 
+})

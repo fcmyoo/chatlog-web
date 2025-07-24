@@ -35,26 +35,26 @@
         </div>
         <div v-else>
           <div class="media-grid">
-            <div 
-              v-for="media in paginatedMedia" 
+            <div
+              v-for="media in paginatedMedia"
               :key="media.id"
               class="media-item"
                              @click="handlePreviewMedia(media)"
             >
               <div class="media-preview">
-                <img 
+                <img
                   v-if="media.type === 'image'"
                   :src="getMediaUrl(media)"
                   :alt="media.name"
                   class="media-thumbnail"
                 />
-                <video 
+                <video
                   v-else-if="media.type === 'video'"
                   :src="getMediaUrl(media)"
                   class="media-thumbnail"
                   muted
                 />
-                <div 
+                <div
                   v-else
                   class="media-thumbnail file-thumbnail"
                 >
@@ -85,15 +85,15 @@
                 <p class="media-time">{{ formatTime(media.time) }}</p>
               </div>
               <div class="media-actions">
-                <el-button 
-                  link 
+                <el-button
+                  link
                   @click.stop="downloadMedia(media)"
                   title="下载"
                 >
                   <el-icon><Download /></el-icon>
                 </el-button>
-                <el-button 
-                  link 
+                <el-button
+                  link
                   @click.stop="copyMediaUrl(media)"
                   title="复制链接"
                 >
@@ -124,19 +124,19 @@
       @close="closePreview"
     >
       <div class="preview-container">
-        <img 
+        <img
           v-if="previewMediaRef?.type === 'image'"
           :src="getMediaUrl(previewMediaRef)"
           class="preview-image"
           alt="预览图片"
         />
-        <video 
+        <video
           v-else-if="previewMediaRef?.type === 'video'"
           :src="getMediaUrl(previewMediaRef)"
           class="preview-video"
           controls
         />
-        <audio 
+        <audio
           v-else-if="previewMediaRef?.type === 'voice'"
           :src="getMediaUrl(previewMediaRef)"
           class="preview-audio"
@@ -145,8 +145,8 @@
         <div v-else class="preview-file">
           <el-icon size="60"><Document /></el-icon>
           <p>{{ previewMediaRef?.name }}</p>
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             @click="downloadMedia(previewMediaRef)"
           >
             下载文件
@@ -165,7 +165,7 @@ import api from '@/api'
 
 export default {
   name: 'Media',
-  setup() {
+  setup () {
     const loading = ref(false)
     const mediaList = ref([])
     const searchKeyword = ref('')
@@ -178,17 +178,17 @@ export default {
     // 过滤后的媒体列表
     const filteredMedia = computed(() => {
       let filtered = mediaList.value
-      
+
       if (mediaType.value) {
         filtered = filtered.filter(media => media.type === mediaType.value)
       }
-      
+
       if (searchKeyword.value) {
-        filtered = filtered.filter(media => 
+        filtered = filtered.filter(media =>
           (media.name || '').toLowerCase().includes(searchKeyword.value.toLowerCase())
         )
       }
-      
+
       return filtered
     })
 
@@ -203,10 +203,10 @@ export default {
     const extractMediaFromChatLogs = (chatLogs) => {
       const mediaFiles = []
       let mediaIndex = 1
-      
+
       chatLogs.forEach(log => {
         const content = log.content || ''
-        
+
         // 提取图片 ![图片](url)
         const imageMatches = content.match(/!\[图片\]\((.*?)\)/g)
         if (imageMatches) {
@@ -216,19 +216,19 @@ export default {
               const url = urlMatch[1]
               const id = url.split('/').pop() || `img_${mediaIndex++}`
               mediaFiles.push({
-                id: id,
+                id,
                 name: `图片_${log.senderName}_${log.time}.jpg`,
                 type: 'image',
                 size: Math.floor(Math.random() * 2000000) + 100000, // 模拟文件大小
                 time: log.time,
-                url: url,
+                url,
                 sender: log.senderName,
                 senderId: log.senderId
               })
             }
           })
         }
-        
+
         // 提取视频 ![视频](url)
         const videoMatches = content.match(/!\[视频\]\((.*?)\)/g)
         if (videoMatches) {
@@ -238,19 +238,19 @@ export default {
               const url = urlMatch[1]
               const id = url.split('/').pop() || `video_${mediaIndex++}`
               mediaFiles.push({
-                id: id,
+                id,
                 name: `视频_${log.senderName}_${log.time}.mp4`,
                 type: 'video',
                 size: Math.floor(Math.random() * 10000000) + 1000000,
                 time: log.time,
-                url: url,
+                url,
                 sender: log.senderName,
                 senderId: log.senderId
               })
             }
           })
         }
-        
+
         // 提取语音 ![语音](url)
         const voiceMatches = content.match(/!\[语音\]\((.*?)\)/g)
         if (voiceMatches) {
@@ -260,19 +260,19 @@ export default {
               const url = urlMatch[1]
               const id = url.split('/').pop() || `voice_${mediaIndex++}`
               mediaFiles.push({
-                id: id,
+                id,
                 name: `语音_${log.senderName}_${log.time}.mp3`,
                 type: 'voice',
                 size: Math.floor(Math.random() * 1000000) + 50000,
                 time: log.time,
-                url: url,
+                url,
                 sender: log.senderName,
                 senderId: log.senderId
               })
             }
           })
         }
-        
+
         // 提取文件 ![文件](url)
         const fileMatches = content.match(/!\[文件\]\((.*?)\)/g)
         if (fileMatches) {
@@ -282,19 +282,19 @@ export default {
               const url = urlMatch[1]
               const id = url.split('/').pop() || `file_${mediaIndex++}`
               mediaFiles.push({
-                id: id,
+                id,
                 name: `文件_${log.senderName}_${log.time}`,
                 type: 'file',
                 size: Math.floor(Math.random() * 5000000) + 100000,
                 time: log.time,
-                url: url,
+                url,
                 sender: log.senderName,
                 senderId: log.senderId
               })
             }
           })
         }
-        
+
         // 检查是否包含HTTP链接的图片
         if (content.includes('http://127.0.0.1:5030/image/')) {
           const imageUrls = content.match(/http:\/\/127\.0\.0\.1:5030\/image\/[a-zA-Z0-9]+/g)
@@ -302,12 +302,12 @@ export default {
             imageUrls.forEach(url => {
               const id = url.split('/').pop()
               mediaFiles.push({
-                id: id,
+                id,
                 name: `图片_${log.senderName}_${dayjs(log.time).format('MMDD_HHmm')}.jpg`,
                 type: 'image',
                 size: Math.floor(Math.random() * 2000000) + 100000,
                 time: log.time,
-                url: url,
+                url,
                 sender: log.senderName,
                 senderId: log.senderId
               })
@@ -315,7 +315,7 @@ export default {
           }
         }
       })
-      
+
       return mediaFiles
     }
 
@@ -326,47 +326,47 @@ export default {
         // 获取最近7天的聊天记录来提取多媒体文件
         const endDate = dayjs()
         const startDate = endDate.subtract(7, 'day')
-        
+
         // 获取所有会话
         const sessionsResponse = await api.getSessions()
         const sessions = sessionsResponse.data || []
-        
+
         if (sessions.length === 0) {
           mediaList.value = []
           ElMessage.info('暂无会话数据')
           return
         }
-        
+
         // 从前几个活跃会话中获取聊天记录
         const activeSessions = sessions.slice(0, 5) // 获取前5个会话
         const allMediaFiles = []
-        
+
         for (const session of activeSessions) {
           try {
             console.log('获取会话聊天记录:', session.name || session.id)
-            
+
             const chatLogsResponse = await api.getChatLogs({
               talker: session.id || session.name,
               time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
               limit: 200
             })
-            
+
             console.log('聊天记录响应类型:', typeof chatLogsResponse.data)
             console.log('聊天记录响应内容:', chatLogsResponse.data)
-            
+
             const chatLogs = chatLogsResponse.data || []
             console.log('解析后的聊天记录数量:', chatLogs.length)
-            
+
             const mediaFiles = extractMediaFromChatLogs(chatLogs)
             console.log('提取的媒体文件数量:', mediaFiles.length)
-            
+
             allMediaFiles.push(...mediaFiles)
           } catch (error) {
             console.error(`获取会话 ${session.name} 的聊天记录失败:`, error)
             ElMessage.warning(`获取会话 ${session.name} 的聊天记录失败: ${error.message}`)
           }
         }
-        
+
         // 去重并按时间排序
         const uniqueMediaFiles = allMediaFiles.reduce((unique, item) => {
           const exists = unique.find(u => u.id === item.id && u.url === item.url)
@@ -375,12 +375,12 @@ export default {
           }
           return unique
         }, [])
-        
+
         uniqueMediaFiles.sort((a, b) => dayjs(b.time).valueOf() - dayjs(a.time).valueOf())
-        
+
         mediaList.value = uniqueMediaFiles
         ElMessage.success(`加载了 ${mediaList.value.length} 个媒体文件`)
-        
+
         // 如果没有找到媒体文件，添加一些提示数据
         if (mediaList.value.length === 0) {
           mediaList.value = [
@@ -396,11 +396,10 @@ export default {
             }
           ]
         }
-        
       } catch (error) {
         console.error('加载媒体文件失败:', error)
         ElMessage.error('加载媒体文件失败: ' + error.message)
-        
+
         // 如果失败，使用模拟数据
         mediaList.value = [
           {
@@ -483,7 +482,7 @@ export default {
     // 获取媒体URL
     const getMediaUrl = (media) => {
       if (media.url) return media.url
-      
+
       switch (media.type) {
         case 'image':
           return api.getImageUrl(media.id)
@@ -768,4 +767,4 @@ export default {
     gap: 15px;
   }
 }
-</style> 
+</style>

@@ -6,7 +6,6 @@
 import axios from 'axios'
 
 // 导入统一服务配置（适配浏览器环境）
-const isDevelopment = process.env.NODE_ENV === 'development'
 const isProduction = process.env.NODE_ENV === 'production'
 
 // 服务地址配置
@@ -23,24 +22,24 @@ const parseCSV = (csvText) => {
     console.warn('parseCSV: 输入数据不是字符串', typeof csvText, csvText)
     return []
   }
-  
+
   const lines = csvText.trim().split('\n')
   if (lines.length < 2) return []
-  
+
   const headers = lines[0].split(',').map(h => h.trim())
   const data = []
-  
+
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(',').map(v => v.trim())
     const row = {}
-    
+
     headers.forEach((header, index) => {
       row[header] = values[index] || ''
     })
-    
+
     data.push(row)
   }
-  
+
   return data
 }
 
@@ -50,10 +49,10 @@ const parseSessions = (sessionText) => {
     console.warn('parseSessions: 输入数据不是字符串', typeof sessionText, sessionText)
     return []
   }
-  
+
   const lines = sessionText.trim().split('\n').filter(line => line.trim())
   const sessions = []
-  
+
   for (const line of lines) {
     if (line.trim()) {
       // 解析格式：群名称(群ID) 时间
@@ -69,7 +68,7 @@ const parseSessions = (sessionText) => {
       }
     }
   }
-  
+
   return sessions
 }
 
@@ -79,7 +78,7 @@ const parseChatLogs = (chatlogText) => {
     console.warn('parseChatLogs: 输入数据为空')
     return []
   }
-  
+
   // 如果是对象或数组，尝试转换为字符串
   let textData = chatlogText
   if (typeof chatlogText === 'object') {
@@ -94,10 +93,10 @@ const parseChatLogs = (chatlogText) => {
     console.warn('parseChatLogs: 输入数据类型异常，尝试转换为字符串', typeof chatlogText)
     textData = String(chatlogText)
   }
-  
+
   const lines = textData.trim().split('\n')
   const chatLogs = []
-  
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
     if (line) {
@@ -106,24 +105,24 @@ const parseChatLogs = (chatlogText) => {
       if (match) {
         const [, senderName, senderId, time] = match
         let content = ''
-        
+
         // 读取消息内容（下一行）
         if (i + 1 < lines.length) {
           content = lines[i + 1].trim()
           i++ // 跳过内容行
         }
-        
+
         chatLogs.push({
           senderName: senderName.trim(),
           senderId: senderId.trim(),
           time: time.trim(),
-          content: content,
+          content,
           timestamp: new Date(time.trim()).getTime()
         })
       }
     }
   }
-  
+
   return chatLogs
 }
 
@@ -143,11 +142,11 @@ const aiAPI = axios.create({
 chatlogAPI.interceptors.request.use(
   (config) => {
     console.log('Chatlog API请求:', config.method?.toUpperCase(), config.url, config.params)
-    
+
     if (['post', 'put', 'patch'].includes(config.method?.toLowerCase())) {
       config.headers['Content-Type'] = 'application/json'
     }
-    
+
     return config
   },
   (error) => {
@@ -156,15 +155,15 @@ chatlogAPI.interceptors.request.use(
   }
 )
 
-// AI API 请求拦截器  
+// AI API 请求拦截器
 aiAPI.interceptors.request.use(
   (config) => {
     console.log('AI API请求:', config.method?.toUpperCase(), config.url, config.data)
-    
+
     if (['post', 'put', 'patch'].includes(config.method?.toLowerCase())) {
       config.headers['Content-Type'] = 'application/json'
     }
-    
+
     return config
   },
   (error) => {
@@ -200,36 +199,36 @@ aiAPI.interceptors.response.use(
 // 统一API接口
 export default {
   // ==================== Chatlog API ====================
-  
+
   // 聊天记录查询
-  async getChatLogs(params) {
+  async getChatLogs (params) {
     const response = await chatlogAPI.get('/api/v1/chatlog', { params })
     return {
       ...response,
       data: parseChatLogs(response.data)
     }
   },
-  
+
   // 联系人列表
-  async getContacts() {
+  async getContacts () {
     const response = await chatlogAPI.get('/api/v1/contact')
     return {
       ...response,
       data: parseCSV(response.data)
     }
   },
-  
+
   // 群聊列表
-  async getChatrooms() {
+  async getChatrooms () {
     const response = await chatlogAPI.get('/api/v1/chatroom')
     return {
       ...response,
       data: parseCSV(response.data)
     }
   },
-  
+
   // 会话列表
-  async getSessions() {
+  async getSessions () {
     const response = await chatlogAPI.get('/api/v1/session')
     return {
       ...response,
@@ -238,14 +237,14 @@ export default {
   },
 
   // 原始数据（用于导出）
-  async getChatLogsRaw(params) {
+  async getChatLogsRaw (params) {
     const response = await chatlogAPI.get('/api/v1/chatlog', { params })
     console.log('原始API响应:', response.data)
     return response
   },
 
   // 导出聊天记录
-  exportChatLogs(params) {
+  exportChatLogs (params) {
     return chatlogAPI.get('/api/v1/chatlog', {
       params: {
         ...params,
@@ -255,57 +254,57 @@ export default {
   },
 
   // ==================== AI API ====================
-  
+
   // 开始分析
-  async startAnalysis(data) {
+  async startAnalysis (data) {
     const response = await aiAPI.post('/ai-api/analysis', data)
     return response.data
   },
 
   // 获取分析历史
-  async getAnalysisHistory(params = {}) {
+  async getAnalysisHistory (params = {}) {
     const response = await aiAPI.get('/ai-api/history', { params })
     return response.data
   },
 
   // 删除分析记录
-  async deleteAnalysis(analysisId) {
+  async deleteAnalysis (analysisId) {
     const response = await aiAPI.delete(`/ai-api/history/${analysisId}`)
     return response.data
   },
 
   // 获取可用模型
-  async getAvailableModels() {
+  async getAvailableModels () {
     const response = await aiAPI.get('/ai-api/models/config')
     return response.data
   },
 
   // 测试连接
-  async testConnection() {
+  async testConnection () {
     const response = await aiAPI.get('/ai-api/models/test')
     return response.data
   },
 
   // ==================== 多媒体资源 ====================
-  
+
   // 多媒体内容URL生成
-  getImageUrl(id) {
+  getImageUrl (id) {
     return `${SERVICE_URLS.chatlog}/image/${id}`
   },
-  
-  getVideoUrl(id) {
+
+  getVideoUrl (id) {
     return `${SERVICE_URLS.chatlog}/video/${id}`
   },
-  
-  getFileUrl(id) {
+
+  getFileUrl (id) {
     return `${SERVICE_URLS.chatlog}/file/${id}`
   },
-  
-  getVoiceUrl(id) {
+
+  getVoiceUrl (id) {
     return `${SERVICE_URLS.chatlog}/voice/${id}`
   },
-  
-  getDataUrl(path) {
+
+  getDataUrl (path) {
     return `${SERVICE_URLS.chatlog}/data/${path}`
   }
 }

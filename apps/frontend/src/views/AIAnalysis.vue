@@ -11,8 +11,8 @@
       <template #header>
         <div class="card-header">
           <span>📊 配置分析</span>
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             :icon="analyzing ? 'Loading' : 'TrendCharts'"
             @click="startAnalysis"
             :loading="analyzing"
@@ -28,8 +28,8 @@
         <el-col :span="12">
           <div class="config-item">
             <label>选择群聊</label>
-            <el-select 
-              v-model="analysisForm.groupName" 
+            <el-select
+              v-model="analysisForm.groupName"
               placeholder="请选择要分析的群聊"
               style="width: 100%"
               filterable
@@ -49,8 +49,8 @@
         <el-col :span="12">
           <div class="config-item">
             <label>分析类型</label>
-            <el-select 
-              v-model="analysisForm.analysisType" 
+            <el-select
+              v-model="analysisForm.analysisType"
               placeholder="请选择分析类型"
               style="width: 100%"
             >
@@ -123,8 +123,8 @@
             <p>{{ progressInfo.message }}</p>
           </div>
         </div>
-        <el-progress 
-          :percentage="progressInfo.percentage" 
+        <el-progress
+          :percentage="progressInfo.percentage"
           :status="progressInfo.status"
           style="margin-top: 15px;"
         />
@@ -132,8 +132,8 @@
     </el-card>
 
     <!-- 分析结果 -->
-    <AnalysisResult 
-      v-if="currentResult" 
+    <AnalysisResult
+      v-if="currentResult"
       :result="currentResult"
       @save="saveAnalysis"
       @retry="retryAnalysis"
@@ -145,10 +145,10 @@
         <div class="card-header">
           <span>📚 分析历史</span>
           <div>
-            <el-select 
-              v-model="historyFilter.type" 
-              placeholder="筛选类型" 
-              clearable 
+            <el-select
+              v-model="historyFilter.type"
+              placeholder="筛选类型"
+              clearable
               size="small"
               style="width: 150px; margin-right: 10px;"
             >
@@ -164,7 +164,7 @@
         </div>
       </template>
 
-      <AnalysisHistory 
+      <AnalysisHistory
         :histories="analysisHistory"
         :loading="historyLoading"
         @view="viewHistory"
@@ -186,7 +186,7 @@ export default {
     AnalysisResult,
     AnalysisHistory
   },
-  data() {
+  data () {
     return {
       // 分析表单
       analysisForm: {
@@ -194,10 +194,10 @@ export default {
         analysisType: 'programming',
         customPrompt: ''
       },
-      
+
       // 时间范围
       dateRange: [],
-      
+
       // 分析状态
       analyzing: false,
       progressInfo: {
@@ -206,13 +206,13 @@ export default {
         percentage: 0,
         status: ''
       },
-      
+
       // 数据
       chatrooms: [],
       analysisTypes: {},
       currentResult: null,
       analysisHistory: [],
-      
+
       // 历史筛选
       historyFilter: {
         type: '',
@@ -223,67 +223,66 @@ export default {
     }
   },
   computed: {
-    canAnalyze() {
-      return this.analysisForm.groupName && 
-             this.analysisForm.analysisType && 
-             this.dateRange && 
+    canAnalyze () {
+      return this.analysisForm.groupName &&
+             this.analysisForm.analysisType &&
+             this.dateRange &&
              this.dateRange.length === 2 &&
              !this.analyzing
     },
-    timeRange() {
+    timeRange () {
       if (!this.dateRange || this.dateRange.length !== 2) {
         return ''
       }
       return `${this.dateRange[0]}~${this.dateRange[1]}`
     }
   },
-  async created() {
+  async created () {
     await this.initializeData()
   },
   methods: {
-    async initializeData() {
+    async initializeData () {
       try {
         // 并行加载初始数据
         const [chatroomsRes, typesRes] = await Promise.all([
           this.$store.dispatch('fetchChatrooms'),
           aiApi.getAnalysisTypes()
         ])
-        
+
         this.chatrooms = this.$store.getters.getChatrooms
         this.analysisTypes = typesRes.data.data
-        
+
         // 设置默认时间范围为最近30天
         this.setDateRange(30)
-        
+
         // 加载分析历史
         await this.loadHistory()
-        
       } catch (error) {
         console.error('初始化数据失败:', error)
         this.$message.error('加载数据失败，请刷新页面重试')
       }
     },
 
-    onGroupChange() {
+    onGroupChange () {
       console.log('选择群聊:', this.analysisForm.groupName)
     },
 
-    onDateChange() {
+    onDateChange () {
       console.log('时间范围变更:', this.timeRange)
     },
 
-    setDateRange(days) {
+    setDateRange (days) {
       const end = new Date()
       const start = new Date()
       start.setDate(start.getDate() - days)
-      
+
       this.dateRange = [
         start.toISOString().split('T')[0],
         end.toISOString().split('T')[0]
       ]
     },
 
-    async startAnalysis() {
+    async startAnalysis () {
       if (!this.canAnalyze) {
         this.$message.warning('请完善分析配置')
         return
@@ -291,17 +290,17 @@ export default {
 
       this.analyzing = true
       this.currentResult = null
-      
+
       try {
         // 模拟进度更新
         this.updateProgress('获取聊天数据...', 20)
-        
+
         await new Promise(resolve => setTimeout(resolve, 1000))
         this.updateProgress('AI模型分析中...', 60)
-        
+
         await new Promise(resolve => setTimeout(resolve, 2000))
         this.updateProgress('生成分析报告...', 90)
-        
+
         // 实际API调用
         const response = await aiApi.performAnalysis({
           groupName: this.analysisForm.groupName,
@@ -311,30 +310,29 @@ export default {
         })
 
         this.updateProgress('分析完成!', 100, 'success')
-        
+
         if (response.data.success) {
           this.currentResult = response.data.data
           this.$message.success('AI分析完成!')
-          
+
           // 刷新历史列表
           await this.loadHistory()
         } else {
           throw new Error(response.data.error || '分析失败')
         }
-
       } catch (error) {
         console.error('AI分析失败:', error)
         this.updateProgress('分析失败', 0, 'exception')
-        
+
         let errorMessage = '分析失败，请重试'
         if (error.response?.data?.error) {
           errorMessage = error.response.data.error
         } else if (error.message) {
           errorMessage = error.message
         }
-        
+
         this.$message.error(errorMessage)
-        
+
         // 显示建议
         if (error.response?.data?.suggestions) {
           const suggestions = error.response.data.suggestions
@@ -345,7 +343,6 @@ export default {
             duration: 8000
           })
         }
-        
       } finally {
         setTimeout(() => {
           this.analyzing = false
@@ -359,7 +356,7 @@ export default {
       }
     },
 
-    updateProgress(stage, percentage, status = '') {
+    updateProgress (stage, percentage, status = '') {
       this.progressInfo = {
         stage,
         message: `${stage} ${percentage}%`,
@@ -368,18 +365,18 @@ export default {
       }
     },
 
-    async retryAnalysis() {
+    async retryAnalysis () {
       await this.startAnalysis()
     },
 
-    saveAnalysis(result) {
+    saveAnalysis (result) {
       console.log('保存分析结果:', result)
       this.$message.success('分析结果已保存')
     },
 
-    async loadHistory() {
+    async loadHistory () {
       this.historyLoading = true
-      
+
       try {
         const response = await aiApi.getAnalysisHistory({
           page: this.historyFilter.page,
@@ -390,7 +387,6 @@ export default {
         if (response.data.success) {
           this.analysisHistory = response.data.data.histories
         }
-
       } catch (error) {
         console.error('加载分析历史失败:', error)
         this.$message.error('加载历史记录失败')
@@ -399,41 +395,39 @@ export default {
       }
     },
 
-    async loadMoreHistory() {
+    async loadMoreHistory () {
       this.historyFilter.page++
       await this.loadHistory()
     },
 
-    async viewHistory(item) {
+    async viewHistory (item) {
       try {
         const response = await aiApi.getAnalysisById(item.id)
-        
+
         if (response.data.success) {
           this.currentResult = {
             ...response.data.data,
             isHistoryView: true
           }
         }
-
       } catch (error) {
         console.error('查看历史失败:', error)
         this.$message.error('加载分析结果失败')
       }
     },
 
-    async deleteHistory(item) {
+    async deleteHistory (item) {
       try {
         await this.$confirm(`确定要删除"${item.title}"吗？`, '确认删除', {
           type: 'warning'
         })
 
         const response = await aiApi.deleteAnalysis(item.id)
-        
+
         if (response.data.success) {
           this.$message.success('删除成功')
           await this.loadHistory()
         }
-
       } catch (error) {
         if (error === 'cancel') return
         console.error('删除失败:', error)
@@ -441,7 +435,7 @@ export default {
       }
     },
 
-    getTypeIcon(iconType) {
+    getTypeIcon (iconType) {
       const icons = {
         code: '💻',
         experiment: '🧪',

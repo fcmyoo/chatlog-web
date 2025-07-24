@@ -39,7 +39,7 @@
         <div class="report-header">
           <h4>📊 详细分析报告</h4>
           <div class="report-controls">
-            <el-switch 
+            <el-switch
               v-model="showRawHtml"
               active-text="源码模式"
               inactive-text="预览模式"
@@ -47,10 +47,10 @@
             />
           </div>
         </div>
-        
+
         <!-- HTML预览 -->
         <div v-if="!showRawHtml" class="html-preview">
-          <iframe 
+          <iframe
             ref="reportFrame"
             :srcdoc="htmlContent"
             frameborder="0"
@@ -107,7 +107,7 @@
             关闭
           </el-button>
         </div>
-        <iframe 
+        <iframe
           :srcdoc="htmlContent"
           frameborder="0"
           class="fullscreen-frame"
@@ -128,7 +128,7 @@ export default {
     }
   },
   emits: ['save', 'retry'],
-  data() {
+  data () {
     return {
       isFullscreen: false,
       showRawHtml: false,
@@ -136,13 +136,13 @@ export default {
     }
   },
   computed: {
-    htmlContent() {
+    htmlContent () {
       return this.result.htmlContent || this.result.analysisResult || ''
     }
   },
   watch: {
     result: {
-      handler(newResult) {
+      handler (newResult) {
         if (newResult) {
           this.calculateStats()
         }
@@ -151,7 +151,7 @@ export default {
     }
   },
   methods: {
-    getTypeName(type) {
+    getTypeName (type) {
       const typeNames = {
         programming: '编程技术分析',
         science: '科学学习分析',
@@ -161,26 +161,26 @@ export default {
       return typeNames[type] || '数据分析'
     },
 
-    formatTime(timestamp) {
+    formatTime (timestamp) {
       if (!timestamp) return ''
       const date = new Date(timestamp)
       return date.toLocaleString('zh-CN')
     },
 
-    formatFileSize(bytes) {
+    formatFileSize (bytes) {
       if (!bytes) return '0 B'
       const sizes = ['B', 'KB', 'MB', 'GB']
       const i = Math.floor(Math.log(bytes) / Math.log(1024))
       return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
     },
 
-    calculateStats() {
+    calculateStats () {
       if (!this.htmlContent) return
 
       // 计算报告统计信息
       const textContent = this.htmlContent.replace(/<[^>]*>/g, '')
       const chartMatches = this.htmlContent.match(/<(canvas|svg|chart)/gi) || []
-      
+
       this.analysisStats = {
         wordCount: textContent.length,
         chartCount: chartMatches.length,
@@ -188,10 +188,10 @@ export default {
       }
     },
 
-    onFrameLoad() {
+    onFrameLoad () {
       // iframe加载完成后的处理
       console.log('分析报告加载完成')
-      
+
       // 可以在这里注入一些样式优化
       try {
         const frame = this.$refs.reportFrame
@@ -213,9 +213,9 @@ export default {
       }
     },
 
-    toggleFullscreen() {
+    toggleFullscreen () {
       this.isFullscreen = !this.isFullscreen
-      
+
       if (this.isFullscreen) {
         document.body.style.overflow = 'hidden'
       } else {
@@ -223,20 +223,20 @@ export default {
       }
     },
 
-    downloadReport() {
+    downloadReport () {
       try {
         const blob = new Blob([this.htmlContent], { type: 'text/html;charset=utf-8' })
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
-        
+
         const filename = `${this.result.title || 'AI分析报告'}_${new Date().toISOString().split('T')[0]}.html`
-        
+
         link.href = url
         link.download = filename
         link.click()
-        
+
         URL.revokeObjectURL(url)
-        
+
         this.$message.success('报告下载成功')
       } catch (error) {
         console.error('下载报告失败:', error)
@@ -244,15 +244,15 @@ export default {
       }
     },
 
-    retryAnalysis() {
+    retryAnalysis () {
       this.$emit('retry')
     },
 
-    saveAnalysis() {
+    saveAnalysis () {
       this.$emit('save', this.result)
     }
   },
-  beforeUnmount() {
+  beforeUnmount () {
     // 清理全屏状态
     if (this.isFullscreen) {
       document.body.style.overflow = ''
@@ -432,17 +432,17 @@ export default {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .actions {
     width: 100%;
     justify-content: flex-start;
   }
-  
+
   .meta-info {
     flex-wrap: wrap;
     gap: 10px;
   }
-  
+
   .html-preview {
     height: 400px;
   }

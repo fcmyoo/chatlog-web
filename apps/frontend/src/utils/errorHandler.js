@@ -8,7 +8,7 @@
  */
 const ErrorTypeMessages = {
   VALIDATION_ERROR: '输入参数有误',
-  BUSINESS_ERROR: '业务逻辑错误', 
+  BUSINESS_ERROR: '业务逻辑错误',
   EXTERNAL_API_ERROR: '外部服务异常',
   SYSTEM_ERROR: '系统错误',
   TIMEOUT_ERROR: '请求超时',
@@ -37,7 +37,7 @@ const HttpStatusMessages = {
  * 前端错误处理器
  */
 class FrontendErrorHandler {
-  constructor(options = {}) {
+  constructor (options = {}) {
     this.showNotification = options.showNotification || this.defaultNotification
     this.enableLogging = options.enableLogging !== false
     this.retryConfig = {
@@ -52,9 +52,9 @@ class FrontendErrorHandler {
   /**
    * 处理API错误响应
    */
-  handleApiError(error, options = {}) {
+  handleApiError (error, options = {}) {
     const normalizedError = this.normalizeError(error)
-    
+
     // 记录错误日志
     if (this.enableLogging) {
       this.logError(normalizedError, options.context)
@@ -77,7 +77,7 @@ class FrontendErrorHandler {
   /**
    * 标准化错误对象
    */
-  normalizeError(error) {
+  normalizeError (error) {
     // 处理网络错误
     if (!error.response && error.request) {
       return {
@@ -94,7 +94,7 @@ class FrontendErrorHandler {
     // 处理HTTP响应错误
     if (error.response) {
       const { status, data } = error.response
-      
+
       // 如果后端返回了标准化错误格式
       if (data && data.error && data.error.type) {
         return {
@@ -147,34 +147,34 @@ class FrontendErrorHandler {
   /**
    * 根据HTTP状态码推断错误类型
    */
-  inferErrorType(statusCode) {
+  inferErrorType (statusCode) {
     if (statusCode >= 400 && statusCode < 500) {
       if (statusCode === 408) return 'TIMEOUT_ERROR'
       if (statusCode === 429) return 'RATE_LIMIT_ERROR'
       return 'VALIDATION_ERROR'
     }
-    
+
     if (statusCode >= 500) {
       if (statusCode === 502 || statusCode === 503 || statusCode === 504) {
         return 'EXTERNAL_API_ERROR'
       }
       return 'SYSTEM_ERROR'
     }
-    
+
     return 'SYSTEM_ERROR'
   }
 
   /**
    * 显示用户通知
    */
-  showUserNotification(error, options = {}) {
+  showUserNotification (error, options = {}) {
     const severity = this.getNotificationSeverity(error.type)
     const message = options.customMessage || error.message
-    
+
     const notificationConfig = {
       type: severity,
       title: this.getNotificationTitle(error.type),
-      message: message,
+      message,
       duration: options.duration || this.getNotificationDuration(severity),
       showClose: true,
       ...options
@@ -191,22 +191,22 @@ class FrontendErrorHandler {
   /**
    * 默认通知显示方法（需要被重写）
    */
-  defaultNotification(config) {
+  defaultNotification (config) {
     console.warn('请配置showNotification方法以显示用户通知:', config)
   }
 
   /**
    * 获取通知严重程度
    */
-  getNotificationSeverity(errorType) {
+  getNotificationSeverity (errorType) {
     const severityMap = {
-      'VALIDATION_ERROR': 'warning',
-      'BUSINESS_ERROR': 'warning',
-      'EXTERNAL_API_ERROR': 'error',
-      'SYSTEM_ERROR': 'error',
-      'TIMEOUT_ERROR': 'warning',
-      'RATE_LIMIT_ERROR': 'warning',
-      'NETWORK_ERROR': 'error'
+      VALIDATION_ERROR: 'warning',
+      BUSINESS_ERROR: 'warning',
+      EXTERNAL_API_ERROR: 'error',
+      SYSTEM_ERROR: 'error',
+      TIMEOUT_ERROR: 'warning',
+      RATE_LIMIT_ERROR: 'warning',
+      NETWORK_ERROR: 'error'
     }
     return severityMap[errorType] || 'error'
   }
@@ -214,19 +214,19 @@ class FrontendErrorHandler {
   /**
    * 获取通知标题
    */
-  getNotificationTitle(errorType) {
+  getNotificationTitle (errorType) {
     return ErrorTypeMessages[errorType] || '系统提示'
   }
 
   /**
    * 获取通知持续时间
    */
-  getNotificationDuration(severity) {
+  getNotificationDuration (severity) {
     const durationMap = {
-      'info': 3000,
-      'success': 3000,
-      'warning': 5000,
-      'error': 8000
+      info: 3000,
+      success: 3000,
+      warning: 5000,
+      error: 8000
     }
     return durationMap[severity] || 5000
   }
@@ -234,7 +234,7 @@ class FrontendErrorHandler {
   /**
    * 记录错误日志
    */
-  logError(error, context = {}) {
+  logError (error, context = {}) {
     const logData = {
       timestamp: error.timestamp,
       type: error.type,
@@ -242,7 +242,7 @@ class FrontendErrorHandler {
       statusCode: error.statusCode,
       url: window.location.href,
       userAgent: navigator.userAgent,
-      context: context
+      context
     }
 
     if (error.details) {
@@ -270,7 +270,7 @@ class FrontendErrorHandler {
   /**
    * 判断是否应该重试
    */
-  shouldRetry(error, retryCount) {
+  shouldRetry (error, retryCount) {
     if (retryCount >= this.retryConfig.maxRetries) {
       return false
     }
@@ -281,7 +281,7 @@ class FrontendErrorHandler {
   /**
    * 安排重试
    */
-  async scheduleRetry(retryFn, retryCount, error) {
+  async scheduleRetry (retryFn, retryCount, error) {
     const delay = Math.min(
       this.retryConfig.baseDelay * Math.pow(2, retryCount),
       this.retryConfig.maxDelay
@@ -299,7 +299,7 @@ class FrontendErrorHandler {
   /**
    * 创建包装函数，自动处理异步操作的错误
    */
-  wrapAsyncOperation(asyncFn, options = {}) {
+  wrapAsyncOperation (asyncFn, options = {}) {
     return async (...args) => {
       try {
         return await asyncFn(...args)
@@ -310,14 +310,14 @@ class FrontendErrorHandler {
           context: options.context,
           ...options
         }
-        
+
         const normalizedError = this.handleApiError(error, handlerOptions)
-        
+
         // 如果配置了重试，则返回重试的Promise
         if (options.enableRetry && this.shouldRetry(normalizedError, 0)) {
           return this.scheduleRetry(() => asyncFn(...args), 0, normalizedError)
         }
-        
+
         // 否则抛出标准化错误
         throw normalizedError
       }
@@ -327,24 +327,24 @@ class FrontendErrorHandler {
   /**
    * 全局错误监听器
    */
-  setupGlobalErrorHandlers() {
+  setupGlobalErrorHandlers () {
     // 捕获未处理的Promise拒绝
     window.addEventListener('unhandledrejection', (event) => {
       console.error('未处理的Promise拒绝:', event.reason)
-      
+
       if (event.reason && typeof event.reason === 'object') {
         this.handleApiError(event.reason, {
           context: { type: 'unhandledRejection' }
         })
       }
-      
+
       event.preventDefault()
     })
 
     // 捕获JavaScript运行时错误
     window.addEventListener('error', (event) => {
       console.error('JavaScript运行时错误:', event.error)
-      
+
       const error = {
         message: event.message,
         filename: event.filename,
@@ -352,7 +352,7 @@ class FrontendErrorHandler {
         colno: event.colno,
         stack: event.error?.stack
       }
-      
+
       this.handleApiError(error, {
         context: { type: 'runtimeError' }
       })

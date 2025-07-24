@@ -30,12 +30,12 @@
         </div>
         <div v-else>
           <el-row :gutter="20">
-            <el-col 
-              v-for="session in paginatedSessions" 
+            <el-col
+              v-for="session in paginatedSessions"
               :key="session.id"
               :xs="24" :sm="12" :md="8" :lg="6"
             >
-              <el-card 
+              <el-card
                 class="session-card"
                 @click="viewChatHistory(session)"
               >
@@ -50,14 +50,14 @@
                   <p class="session-time">{{ formatTime(session.lastMessageTime) }}</p>
                 </div>
                 <div class="session-actions">
-                  <el-button 
-                    link 
+                  <el-button
+                    link
                     @click.stop="copySessionId(session)"
                   >
                     <el-icon><CopyDocument /></el-icon>
                   </el-button>
-                  <el-button 
-                    link 
+                  <el-button
+                    link
                     @click.stop="viewChatHistory(session)"
                   >
                     <el-icon><ChatDotRound /></el-icon>
@@ -92,7 +92,7 @@ import api from '@/api'
 
 export default {
   name: 'Sessions',
-  setup() {
+  setup () {
     const store = useStore()
     const router = useRouter()
     const loading = ref(false)
@@ -104,7 +104,7 @@ export default {
     // 过滤后的会话列表
     const filteredSessions = computed(() => {
       if (!searchKeyword.value) return sessions.value
-      return sessions.value.filter(session => 
+      return sessions.value.filter(session =>
         (session.name || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
         (session.id || '').toLowerCase().includes(searchKeyword.value.toLowerCase())
       )
@@ -287,4 +287,4 @@ export default {
   justify-content: space-between;
   align-items: center;
 }
-</style> 
+</style>

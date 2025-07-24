@@ -3,29 +3,17 @@
  * 为统一ApiClient添加错误处理支持
  */
 
-import FrontendErrorHandler from '../utils/errorHandler.js'
+import { ErrorHandler, handleError, withErrorHandling } from '@/utils/errorHandler'
 
 /**
  * 创建错误处理器实例
  */
-const errorHandler = new FrontendErrorHandler({
-  enableLogging: true,
-  showNotification: (config) => {
-    // 这里需要集成具体的UI通知库（如Element Plus）
-    // 现在只是控制台输出，待后续集成
-    console.warn('用户通知:', config)
-  },
-  retryConfig: {
-    maxRetries: 2,
-    baseDelay: 1000,
-    retryableErrors: ['TIMEOUT_ERROR', 'EXTERNAL_API_ERROR', 'NETWORK_ERROR']
-  }
-})
+const errorHandler = ErrorHandler.getInstance()
 
 /**
  * 创建带错误处理的axios拦截器
  */
-export function setupErrorHandling(axiosInstance, options = {}) {
+export function setupErrorHandling (axiosInstance, options = {}) {
   // 请求拦截器
   axiosInstance.interceptors.request.use(
     (config) => {
@@ -44,7 +32,7 @@ export function setupErrorHandling(axiosInstance, options = {}) {
     (response) => {
       // 计算请求耗时
       const duration = Date.now() - response.config.startTime
-      
+
       // 记录慢请求
       if (duration > 3000) {
         console.warn(`慢请求检测: ${response.config.url} 耗时 ${duration}ms`)
@@ -54,21 +42,12 @@ export function setupErrorHandling(axiosInstance, options = {}) {
     },
     (error) => {
       // 使用统一错误处理器处理错误
-      const handlerOptions = {
-        showNotification: options.showNotification !== false,
-        enableRetry: options.enableRetry === true,
-        context: {
-          url: error.config?.url,
-          method: error.config?.method,
-          timestamp: new Date().toISOString()
-        },
-        ...options
-      }
+      const context = `API请求: ${error.config?.method?.toUpperCase()} ${error.config?.url}`
 
-      // 处理错误并返回标准化错误对象
-      const normalizedError = errorHandler.handleApiError(error, handlerOptions)
-      
-      return Promise.reject(normalizedError)
+      // 处理错误
+      errorHandler.handle(error, context)
+
+      return Promise.reject(error)
     }
   )
 
@@ -78,27 +57,29 @@ export function setupErrorHandling(axiosInstance, options = {}) {
 /**
  * 包装API方法，添加自动错误处理和重试
  */
-export function wrapApiMethod(fn, options = {}) {
-  return errorHandler.wrapAsyncOperation(fn, {
-    enableRetry: options.enableRetry,
-    showNotification: options.showNotification !== false,
-    context: options.context,
-    notificationOptions: options.notificationOptions
-  })
+export function wrapApiMethod (fn, context = 'API操作') {
+  return withErrorHandling(fn, context)
 }
 
 /**
  * 手动处理特定错误
  */
-export function handleSpecificError(error, options = {}) {
-  return errorHandler.handleApiError(error, options)
+export function handleSpecificError (error, context = '特定错误') {
+  return handleError(error, context)
 }
 
 /**
  * 设置全局错误监听
  */
-export function setupGlobalErrorHandling() {
-  errorHandler.setupGlobalErrorHandlers()
+export function setupGlobalErrorHandling () {
+  // 设置全局错误监听
+  window.addEventListener('error', (event) => {
+    handleError(event.error, '全局JS错误')
+  })
+
+  window.addEventListener('unhandledrejection', (event) => {
+    handleError(event.reason, '未处理的Promise拒绝')
+  })
 }
 
 export default errorHandler

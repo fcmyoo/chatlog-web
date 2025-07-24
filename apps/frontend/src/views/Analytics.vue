@@ -14,7 +14,7 @@
           </span>
         </div>
       </div>
-      
+
       <div class="stat-card animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
         <div class="stat-icon gradient-2">
           <el-icon><User /></el-icon>
@@ -27,7 +27,7 @@
           </span>
         </div>
       </div>
-      
+
       <div class="stat-card animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
         <div class="stat-icon gradient-3">
           <el-icon><ChatRound /></el-icon>
@@ -40,7 +40,7 @@
           </span>
         </div>
       </div>
-      
+
       <div class="stat-card animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
         <div class="stat-icon gradient-4">
           <el-icon><PieChart /></el-icon>
@@ -70,8 +70,8 @@
           </div>
         </div>
         <div class="chart-content">
-          <v-chart 
-            :option="trendChartOption" 
+          <v-chart
+            :option="trendChartOption"
             style="height: 400px;"
             :loading="chartLoading"
           />
@@ -84,8 +84,8 @@
           <h3>用户活跃度热力图</h3>
         </div>
         <div class="chart-content">
-          <v-chart 
-            :option="heatmapOption" 
+          <v-chart
+            :option="heatmapOption"
             style="height: 400px;"
             :loading="chartLoading"
           />
@@ -98,8 +98,8 @@
           <h3>聊天类型分布</h3>
         </div>
         <div class="chart-content">
-          <v-chart 
-            :option="pieChartOption" 
+          <v-chart
+            :option="pieChartOption"
             style="height: 400px;"
             :loading="chartLoading"
           />
@@ -112,8 +112,8 @@
           <h3>高频词汇</h3>
         </div>
         <div class="chart-content">
-          <v-chart 
-            :option="wordCloudOption" 
+          <v-chart
+            :option="wordCloudOption"
             style="height: 400px;"
             :loading="chartLoading"
           />
@@ -126,8 +126,8 @@
           <h3>24小时聊天活跃度</h3>
         </div>
         <div class="chart-content">
-          <v-chart 
-            :option="timeDistributionOption" 
+          <v-chart
+            :option="timeDistributionOption"
             style="height: 400px;"
             :loading="chartLoading"
           />
@@ -140,8 +140,8 @@
           <h3>群聊活跃度排行</h3>
         </div>
         <div class="chart-content">
-          <v-chart 
-            :option="groupRankingOption" 
+          <v-chart
+            :option="groupRankingOption"
             style="height: 400px;"
             :loading="chartLoading"
           />
@@ -155,10 +155,10 @@
 import { ref, onMounted } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { 
-  LineChart, 
-  BarChart, 
-  PieChart, 
+import {
+  LineChart,
+  BarChart,
+  PieChart,
   HeatmapChart,
   ScatterChart
 } from 'echarts/charts'
@@ -193,16 +193,16 @@ export default {
   components: {
     VChart
   },
-  setup() {
+  setup () {
     const chartLoading = ref(true)
     const trendPeriod = ref('30d')
-    
+
     // 统计数据
     const totalMessages = ref(0)
     const activeUsers = ref(0)
     const averageDaily = ref(0)
     const responseRate = ref(0)
-    
+
     // 原始数据
     const allChatLogs = ref([])
     const contacts = ref([])
@@ -645,17 +645,17 @@ export default {
       try {
         const [contactsRes, chatroomsRes, sessionsRes] = await Promise.all([
           api.getContacts(),
-          api.getChatrooms(), 
+          api.getChatrooms(),
           api.getSessions()
         ])
-        
+
         contacts.value = contactsRes.data || []
         chatrooms.value = chatroomsRes.data || []
         sessions.value = sessionsRes.data || []
-        
+
         console.log('基础数据获取成功:', {
           contacts: contacts.value.length,
-          chatrooms: chatrooms.value.length, 
+          chatrooms: chatrooms.value.length,
           sessions: sessions.value.length
         })
       } catch (error) {
@@ -670,12 +670,12 @@ export default {
         // 获取最近90天的数据用于分析
         const endDate = dayjs()
         const startDate = endDate.subtract(90, 'day')
-        
+
         const allLogs = []
-        
+
         // 获取所有活跃会话的聊天记录
         const activeSessions = sessions.value.slice(0, 10) // 取前10个会话
-        
+
         for (const session of activeSessions) {
           try {
             const response = await api.getChatLogs({
@@ -683,7 +683,7 @@ export default {
               time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
               limit: 1000
             })
-            
+
             if (response.data && Array.isArray(response.data)) {
               allLogs.push(...response.data.map(log => ({
                 ...log,
@@ -695,10 +695,10 @@ export default {
             console.warn(`获取会话 ${session.name} 聊天记录失败:`, error.message)
           }
         }
-        
+
         allChatLogs.value = allLogs
         console.log('聊天记录数据获取成功:', allLogs.length, '条记录')
-        
+
         return allLogs
       } catch (error) {
         console.error('获取聊天记录失败:', error)
@@ -715,15 +715,15 @@ export default {
 
       // 总消息数
       totalMessages.value = chatLogs.length
-      
+
       // 活跃用户数（去重发送者）
       const uniqueSenders = new Set(chatLogs.map(log => log.senderId || log.senderName))
       activeUsers.value = uniqueSenders.size
-      
+
       // 计算日均消息数
       const daysSpan = 90 // 90天数据
       averageDaily.value = Math.round(chatLogs.length / daysSpan)
-      
+
       // 模拟响应率计算（基于消息分布）
       responseRate.value = Math.min(95, Math.max(60, Math.round((uniqueSenders.size / Math.max(1, sessions.value.length)) * 100)))
     }
@@ -734,23 +734,23 @@ export default {
       const dates = []
       const data = []
       const dailyCount = {}
-      
+
       // 统计每日消息数
       chatLogs.forEach(log => {
         const date = dayjs(log.time).format('YYYY-MM-DD')
         dailyCount[date] = (dailyCount[date] || 0) + 1
       })
-      
+
       // 生成指定天数的数据
       for (let i = days - 1; i >= 0; i--) {
         const date = dayjs().subtract(i, 'day')
         const dateStr = date.format('YYYY-MM-DD')
         const displayDate = date.format('MM-DD')
-        
+
         dates.push(displayDate)
         data.push(dailyCount[dateStr] || 0)
       }
-      
+
       trendChartOption.value.xAxis.data = dates
       trendChartOption.value.series[0].data = data
     }
@@ -758,21 +758,21 @@ export default {
     // 生成热力图数据
     const generateHeatmapData = (chatLogs) => {
       const heatData = {}
-      
+
       // 统计每小时每天的消息数
       chatLogs.forEach(log => {
         const time = dayjs(log.time)
         const hour = Math.floor(time.hour() / 2) * 2 // 每2小时一个时间段
         const day = time.day() // 0=周日, 1=周一...
-        
+
         const key = `${hour}-${day}`
         heatData[key] = (heatData[key] || 0) + 1
       })
-      
+
       // 转换为ECharts热力图格式
       const data = []
       const maxValue = Math.max(...Object.values(heatData), 1)
-      
+
       for (let day = 0; day < 7; day++) {
         for (let hour = 0; hour < 12; hour++) {
           const actualHour = hour * 2
@@ -781,7 +781,7 @@ export default {
           data.push([hour, day, normalizedValue])
         }
       }
-      
+
       heatmapOption.value.series[0].data = data
     }
 
@@ -789,12 +789,12 @@ export default {
     const generateTypeDistribution = (chatLogs) => {
       const typeCount = {
         text: 0,
-        image: 0, 
+        image: 0,
         voice: 0,
         video: 0,
         file: 0
       }
-      
+
       chatLogs.forEach(log => {
         const content = log.content || ''
         if (content.includes('[图片]') || content.includes('image')) {
@@ -809,7 +809,7 @@ export default {
           typeCount.text++
         }
       })
-      
+
       pieChartOption.value.series[0].data = [
         { value: typeCount.text, name: '文本消息', itemStyle: { color: '#409eff' } },
         { value: typeCount.image, name: '图片', itemStyle: { color: '#67c23a' } },
@@ -822,7 +822,7 @@ export default {
     // 生成时间分布数据
     const generateTimeDistribution = (chatLogs) => {
       const timeCount = new Array(12).fill(0) // 0时-22时，每2小时一个时间段
-      
+
       chatLogs.forEach(log => {
         const hour = dayjs(log.time).hour()
         const timeSlot = Math.floor(hour / 2)
@@ -830,7 +830,7 @@ export default {
           timeCount[timeSlot]++
         }
       })
-      
+
       timeDistributionOption.value.series[0].data = timeCount
     }
 
@@ -838,20 +838,20 @@ export default {
     const generateGroupRanking = (chatLogs) => {
       const groupCount = {}
       const groupNames = []
-      
+
       chatLogs.forEach(log => {
         const talker = log.talker || log.talkerId || '未知群聊'
         groupCount[talker] = (groupCount[talker] || 0) + 1
       })
-      
+
       // 排序并取前10
       const sortedGroups = Object.entries(groupCount)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 10)
-      
+
       const names = sortedGroups.map(([name]) => name)
-      const data = sortedGroups.map(([,count]) => count)
-      
+      const data = sortedGroups.map(([, count]) => count)
+
       groupRankingOption.value.yAxis.data = names
       groupRankingOption.value.series[0].data = data
     }
@@ -860,7 +860,7 @@ export default {
     const generateWordCloudData = (chatLogs) => {
       const words = {}
       const commonWords = ['的', '了', '是', '我', '你', '他', '她', '在', '有', '和', '也', '不', '就', '都', '要', '会', '这', '那', '一个', '什么', '怎么', '可以', '好的', '知道', '没有', '觉得', '应该']
-      
+
       chatLogs.forEach(log => {
         const content = log.content || ''
         // 简单的中文分词（实际项目中建议使用专业分词库）
@@ -872,19 +872,19 @@ export default {
           }
         }
       })
-      
+
       // 取前8个高频词
       const sortedWords = Object.entries(words)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 8)
-      
+
       const wordCloudData = sortedWords.map(([word, count], index) => [
         Math.random() * 100, // x位置
-        Math.random() * 100, // y位置  
+        Math.random() * 100, // y位置
         count, // 词频
         word // 词汇
       ])
-      
+
       wordCloudOption.value.series[0].data = wordCloudData
     }
 
@@ -894,10 +894,10 @@ export default {
         ElMessage.warning('暂无聊天记录数据')
         return
       }
-      
+
       analyzeData(chatLogs)
       generateTrendData(chatLogs)
-      generateHeatmapData(chatLogs) 
+      generateHeatmapData(chatLogs)
       generateTypeDistribution(chatLogs)
       generateTimeDistribution(chatLogs)
       generateGroupRanking(chatLogs)
@@ -906,19 +906,18 @@ export default {
 
     onMounted(async () => {
       chartLoading.value = true
-      
+
       try {
         // 1. 获取基础数据（联系人、群聊、会话）
         await fetchBasicData()
-        
+
         // 2. 获取聊天记录数据
         const chatLogs = await fetchChatLogsData()
-        
+
         // 3. 分析数据并更新图表
         updateAllCharts(chatLogs)
-        
+
         console.log('数据分析完成')
-        
       } catch (error) {
         console.error('加载分析数据失败:', error)
         ElMessage.error('加载数据失败，请检查后端服务是否正常运行')
@@ -1102,17 +1101,17 @@ export default {
   .analytics-header {
     grid-template-columns: 1fr;
   }
-  
+
   .charts-container {
     grid-template-columns: 1fr;
   }
-  
+
   .stat-card {
     padding: 20px;
   }
-  
+
   .chart-card {
     padding: 20px;
   }
 }
-</style> 
+</style>

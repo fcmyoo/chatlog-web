@@ -1,6 +1,5 @@
 /**
 
-
 * 统一API客户端
  * 整合chatlog和AI服务的所有API调用
  * 提供统一的错误处理、缓存和配置管理
@@ -25,10 +24,10 @@ const SERVICE_CONFIG = {
  * 基础HTTP客户端类
  */
 class BaseClient {
-  constructor(serviceName, config) {
+  constructor (serviceName, config) {
     this.serviceName = serviceName
     this.client = axios.create(config)
-    
+
     // 设置统一错误处理
     setupErrorHandling(this.client, {
       showNotification: true,
@@ -41,47 +40,47 @@ class BaseClient {
  * Chatlog API客户端
  */
 class ChatlogClient extends BaseClient {
-  constructor() {
+  constructor () {
     super('Chatlog', SERVICE_CONFIG.chatlog)
   }
 
   // CSV解析工具
-  parseCSV(csvText) {
+  parseCSV (csvText) {
     if (!csvText || typeof csvText !== 'string') {
       console.warn('parseCSV: 输入数据不是字符串', typeof csvText)
       return []
     }
-    
+
     const lines = csvText.trim().split('\n')
     if (lines.length < 2) return []
-    
+
     const headers = lines[0].split(',').map(h => h.trim())
     const data = []
-    
+
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim())
       const row = {}
-      
+
       headers.forEach((header, index) => {
         row[header] = values[index] || ''
       })
-      
+
       data.push(row)
     }
-    
+
     return data
   }
 
   // 会话数据解析
-  parseSessions(sessionText) {
+  parseSessions (sessionText) {
     if (!sessionText || typeof sessionText !== 'string') {
       console.warn('parseSessions: 输入数据不是字符串')
       return []
     }
-    
+
     const lines = sessionText.trim().split('\n').filter(line => line.trim())
     const sessions = []
-    
+
     for (const line of lines) {
       if (line.trim()) {
         // 解析格式：群名称(群ID) 时间
@@ -97,17 +96,17 @@ class ChatlogClient extends BaseClient {
         }
       }
     }
-    
+
     return sessions
   }
 
   // 聊天记录解析
-  parseChatLogs(chatlogText) {
+  parseChatLogs (chatlogText) {
     if (!chatlogText) {
       console.warn('parseChatLogs: 输入数据为空')
       return []
     }
-    
+
     let textData = chatlogText
     if (typeof chatlogText === 'object') {
       if (Array.isArray(chatlogText)) {
@@ -118,10 +117,10 @@ class ChatlogClient extends BaseClient {
     } else if (typeof chatlogText !== 'string') {
       textData = String(chatlogText)
     }
-    
+
     const lines = textData.trim().split('\n')
     const chatLogs = []
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim()
       if (line) {
@@ -130,29 +129,29 @@ class ChatlogClient extends BaseClient {
         if (match) {
           const [, senderName, senderId, time] = match
           let content = ''
-          
+
           // 读取消息内容（下一行）
           if (i + 1 < lines.length) {
             content = lines[i + 1].trim()
             i++ // 跳过内容行
           }
-          
+
           chatLogs.push({
             senderName: senderName.trim(),
             senderId: senderId.trim(),
             time: time.trim(),
-            content: content,
+            content,
             timestamp: new Date(time.trim()).getTime()
           })
         }
       }
     }
-    
+
     return chatLogs
   }
 
   // API方法
-  async getChatLogs(params) {
+  async getChatLogs (params) {
     const response = await this.client.get('/api/v1/chatlog', { params })
     return {
       ...response,
@@ -160,7 +159,7 @@ class ChatlogClient extends BaseClient {
     }
   }
 
-  async getContacts() {
+  async getContacts () {
     const response = await this.client.get('/api/v1/contact')
     return {
       ...response,
@@ -168,7 +167,7 @@ class ChatlogClient extends BaseClient {
     }
   }
 
-  async getChatrooms() {
+  async getChatrooms () {
     const response = await this.client.get('/api/v1/chatroom')
     return {
       ...response,
@@ -176,7 +175,7 @@ class ChatlogClient extends BaseClient {
     }
   }
 
-  async getSessions() {
+  async getSessions () {
     const response = await this.client.get('/api/v1/session')
     return {
       ...response,
@@ -184,34 +183,34 @@ class ChatlogClient extends BaseClient {
     }
   }
 
-  async getChatLogsRaw(params) {
+  async getChatLogsRaw (params) {
     return await this.client.get('/api/v1/chatlog', { params })
   }
 
-  async exportChatLogs(params) {
+  async exportChatLogs (params) {
     return await this.client.get('/api/v1/chatlog', {
       params: { ...params, format: 'csv' }
     })
   }
 
   // 多媒体资源URL生成
-  getImageUrl(id) {
+  getImageUrl (id) {
     return `${SERVICE_CONFIG.chatlog.baseURL}/image/${id}`
   }
 
-  getVideoUrl(id) {
+  getVideoUrl (id) {
     return `${SERVICE_CONFIG.chatlog.baseURL}/video/${id}`
   }
 
-  getFileUrl(id) {
+  getFileUrl (id) {
     return `${SERVICE_CONFIG.chatlog.baseURL}/file/${id}`
   }
 
-  getVoiceUrl(id) {
+  getVoiceUrl (id) {
     return `${SERVICE_CONFIG.chatlog.baseURL}/voice/${id}`
   }
 
-  getDataUrl(path) {
+  getDataUrl (path) {
     return `${SERVICE_CONFIG.chatlog.baseURL}/data/${path}`
   }
 }
@@ -220,66 +219,66 @@ class ChatlogClient extends BaseClient {
  * AI API客户端
  */
 class AIClient extends BaseClient {
-  constructor() {
+  constructor () {
     super('AI', SERVICE_CONFIG.ai)
   }
 
-  async performAnalysis(params) {
+  async performAnalysis (params) {
     const response = await this.client.post('/ai-api/analysis', params)
     return response.data
   }
 
-  async getAnalysisHistory(params) {
+  async getAnalysisHistory (params) {
     const response = await this.client.get('/ai-api/history', { params })
     return response.data
   }
 
-  async getAnalysisById(id) {
+  async getAnalysisById (id) {
     const response = await this.client.get(`/ai-api/history/${id}`)
     return response.data
   }
 
-  async deleteAnalysis(id) {
+  async deleteAnalysis (id) {
     const response = await this.client.delete(`/ai-api/history/${id}`)
     return response.data
   }
 
-  async getAnalysisTypes() {
+  async getAnalysisTypes () {
     const response = await this.client.get('/ai-api/analysis-types')
     return response.data
   }
 
-  async testModelConnection(params) {
+  async testModelConnection (params) {
     const response = await this.client.post('/ai-api/models/test', params)
     return response.data
   }
 
-  async getModelConfig() {
+  async getModelConfig () {
     const response = await this.client.get('/ai-api/models/config')
     return response.data
   }
 
-  async updateModelConfig(config) {
+  async updateModelConfig (config) {
     const response = await this.client.post('/ai-api/models/config', config)
     return response.data
   }
 
-  async getScheduleConfig() {
+  async getScheduleConfig () {
     const response = await this.client.get('/ai-api/schedule/config')
     return response.data
   }
 
-  async updateScheduleConfig(config) {
+  async updateScheduleConfig (config) {
     const response = await this.client.post('/ai-api/schedule/config', config)
     return response.data
   }
 
-  async triggerScheduledAnalysis() {
+  async triggerScheduledAnalysis () {
     const response = await this.client.post('/ai-api/schedule/trigger')
     return response.data
   }
 
-  async getHealthStatus() {
+  async getHealthStatus () {
     const response = await this.client.get('/health')
     return response.data
   }
@@ -289,40 +288,40 @@ class AIClient extends BaseClient {
  * 统一API客户端
  */
 class ApiClient {
-  constructor() {
+  constructor () {
     this.chatlog = new ChatlogClient()
     this.ai = new AIClient()
   }
 
   // 便捷方法 - 向后兼容
-  async getChatLogs(params) {
+  async getChatLogs (params) {
     return await this.chatlog.getChatLogs(params)
   }
 
-  async getContacts() {
+  async getContacts () {
     return await this.chatlog.getContacts()
   }
 
-  async getChatrooms() {
+  async getChatrooms () {
     return await this.chatlog.getChatrooms()
   }
 
-  async getSessions() {
+  async getSessions () {
     return await this.chatlog.getSessions()
   }
 
-  async performAnalysis(params) {
+  async performAnalysis (params) {
     return await this.ai.performAnalysis(params)
   }
 
-  async getAnalysisHistory(params) {
+  async getAnalysisHistory (params) {
     return await this.ai.getAnalysisHistory(params)
   }
 
   // 健康检查
-  async healthCheck() {
+  async healthCheck () {
     const results = {}
-    
+
     try {
       // 检查Chatlog服务
       await this.chatlog.getSessions()
@@ -331,7 +330,7 @@ class ApiClient {
       results.chatlog = { status: 'unhealthy', error: error.message, timestamp: new Date().toISOString() }
     }
 
-    try {     
+    try {
       // 检查AI服务
       await this.ai.getHealthStatus()
       results.ai = { status: 'healthy', timestamp: new Date().toISOString() }

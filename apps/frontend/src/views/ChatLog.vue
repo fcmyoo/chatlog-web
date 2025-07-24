@@ -2,9 +2,9 @@
   <div class="chatlog-page">
     <!-- 搜索表单 -->
     <div class="search-form">
-      <el-form 
-        ref="searchForm" 
-        :model="searchParams" 
+      <el-form
+        ref="searchForm"
+        :model="searchParams"
         label-width="100px"
         @submit.prevent="handleSearch"
       >
@@ -110,8 +110,8 @@
                 <el-icon><Refresh /></el-icon>
                 重置
               </el-button>
-              <el-button 
-                type="success" 
+              <el-button
+                type="success"
                 @click="handleExport"
                 :disabled="!chatLogs.length"
               >
@@ -121,13 +121,13 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <!-- 搜索条件预览 -->
         <div v-if="searchParams.talker.length || searchParams.keyword.length" class="search-preview">
           <div class="preview-title">当前搜索条件：</div>
           <div class="preview-tags">
-            <el-tag 
-              v-for="talker in searchParams.talker" 
+            <el-tag
+              v-for="talker in searchParams.talker"
               :key="talker"
               type="primary"
               closable
@@ -135,8 +135,8 @@
             >
               群聊: {{ talker }}
             </el-tag>
-            <el-tag 
-              v-for="keyword in searchParams.keyword" 
+            <el-tag
+              v-for="keyword in searchParams.keyword"
               :key="keyword"
               type="success"
               closable
@@ -175,8 +175,8 @@
           <el-empty description="暂无聊天记录" />
         </div>
         <div v-else class="chat-messages">
-          <div 
-            v-for="(message, index) in chatLogs" 
+          <div
+            v-for="(message, index) in chatLogs"
             :key="index"
             class="chat-message"
           >
@@ -186,16 +186,16 @@
                   {{ getSenderInitial(message.senderName) }}
                 </el-avatar>
                 <span class="sender-name">{{ message.senderName || '未知' }}</span>
-                <el-tag 
-                  v-if="message.senderId" 
-                  size="small" 
+                <el-tag
+                  v-if="message.senderId"
+                  size="small"
                   type="info"
                   class="talker-tag"
                 >
                   {{ message.senderId }}
                 </el-tag>
                 <!-- 高亮匹配的关键词 -->
-                <el-tag 
+                <el-tag
                   v-if="getMatchedKeywords(message.content).length > 0"
                   size="small"
                   type="success"
@@ -251,7 +251,7 @@
       title="图片预览"
       width="50%"
     >
-      <img 
+      <img
         :src="previewImageUrl"
         style="width: 100%; max-height: 500px; object-fit: contain;"
         alt="预览图片"
@@ -270,7 +270,7 @@ import api from '@/api'
 
 export default {
   name: 'ChatLog',
-  setup() {
+  setup () {
     const store = useStore()
     const loading = ref(false)
     const dateRange = ref(['', ''])
@@ -288,11 +288,11 @@ export default {
     const chatLogs = ref([])
     const imagePreviewVisible = ref(false)
     const previewImageUrl = ref('')
-    
+
     // 选项数据
     const talkerOptions = ref([])
     const keywordOptions = ref([])
-    
+
     // 用于存储历史搜索记录
     const searchHistory = ref({
       talkers: [],
@@ -344,7 +344,7 @@ export default {
 
         const response = await api.getChatLogs(params)
         chatLogs.value = response.data || []
-        
+
         // 修复分页：如果API没有返回总数，则估算总数
         const responseTotal = response.headers['x-total-count'] || response.headers['X-Total-Count']
         if (responseTotal) {
@@ -359,9 +359,9 @@ export default {
             total.value = (currentPage.value - 1) * searchParams.limit + chatLogs.value.length
           }
         }
-        
+
         console.log('查询结果:', chatLogs.value.length, '条记录，总数:', total.value)
-        
+
         if (chatLogs.value.length === 0) {
           ElMessage.info('未找到匹配的聊天记录')
         } else {
@@ -454,7 +454,7 @@ export default {
     // 获取匹配的关键词
     const getMatchedKeywords = (content) => {
       if (!content || !searchParams.keyword.length) return []
-      
+
       const matched = []
       searchParams.keyword.forEach(keyword => {
         if (content.includes(keyword)) {
@@ -467,7 +467,7 @@ export default {
     // 高亮关键词
     const highlightKeywords = (content) => {
       if (!content || !searchParams.keyword.length) return content
-      
+
       let highlightedContent = content
       searchParams.keyword.forEach(keyword => {
         const regex = new RegExp(`(${keyword})`, 'gi')
@@ -480,7 +480,7 @@ export default {
     const handleExport = async () => {
       try {
         console.log('开始导出聊天记录...')
-        
+
         // 构建时间参数
         let timeParam = ''
         if (dateRange.value[0] && dateRange.value[1]) {
@@ -519,7 +519,7 @@ export default {
         // 使用原始API调用，不进行解析
         const response = await api.getChatLogsRaw(params)
         console.log('导出响应:', response.data)
-        
+
         // 处理响应数据
         let csvData = response.data
         if (typeof csvData === 'object') {
@@ -528,10 +528,10 @@ export default {
         } else if (typeof csvData !== 'string') {
           csvData = String(csvData)
         }
-        
+
         // 创建Blob并下载
-        const blob = new Blob([csvData], { 
-          type: 'text/csv;charset=utf-8' 
+        const blob = new Blob([csvData], {
+          type: 'text/csv;charset=utf-8'
         })
         const filename = `聊天记录_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.csv`
         saveAs(blob, filename)
@@ -547,52 +547,52 @@ export default {
       if (!Array.isArray(data) || data.length === 0) {
         return '发送者,时间,内容\n'
       }
-      
+
       const headers = ['发送者', '时间', '内容']
       const csvHeaders = headers.join(',') + '\n'
-      
+
       const csvRows = data.map(item => {
         const sender = item.senderName || item.sender || '未知'
         const time = item.time || item.timestamp || ''
         const content = (item.content || '').replace(/"/g, '""').replace(/,/g, '，')
         return `"${sender}","${time}","${content}"`
       }).join('\n')
-      
+
       return csvHeaders + csvRows
     }
 
     // 解析消息内容中的多媒体格式
     const parseMediaContent = (content) => {
       if (!content) return ''
-      
+
       let parsedContent = content
-      
+
       // 解析图片 ![图片](url)
       parsedContent = parsedContent.replace(/!\[图片\]\((.*?)\)/g, (match, url) => {
         return `<img src="${url}" style="max-width: 200px; max-height: 200px; cursor: pointer; border-radius: 4px;" onclick="window.open('${url}', '_blank')" alt="图片" />`
       })
-      
+
       // 解析视频 ![视频](url)
       parsedContent = parsedContent.replace(/!\[视频\]\((.*?)\)/g, (match, url) => {
         return `<video src="${url}" controls style="max-width: 300px; max-height: 200px; border-radius: 4px;" /></video>`
       })
-      
+
       // 解析语音 ![语音](url)
       parsedContent = parsedContent.replace(/!\[语音\]\((.*?)\)/g, (match, url) => {
         return `<audio src="${url}" controls style="max-width: 300px;" /></audio>`
       })
-      
+
       // 解析文件 ![文件](url)
       parsedContent = parsedContent.replace(/!\[文件\]\((.*?)\)/g, (match, url) => {
         const fileName = url.split('/').pop() || '文件'
         return `<a href="${url}" target="_blank" style="color: #409eff; text-decoration: none;">📁 ${fileName}</a>`
       })
-      
+
       // 解析HTTP链接
       parsedContent = parsedContent.replace(/(https?:\/\/[^\s]+)/g, (match, url) => {
         return `<a href="${url}" target="_blank" style="color: #409eff; text-decoration: none;">${url}</a>`
       })
-      
+
       return parsedContent
     }
 
@@ -948,33 +948,33 @@ export default {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .message-sender {
     margin-bottom: 5px;
   }
-  
+
   .message-image,
   .message-video {
     max-width: 100%;
   }
-  
+
   .search-info {
     flex-direction: column;
     gap: 5px;
     align-items: flex-start;
   }
-  
+
   .preview-tags {
     flex-direction: column;
     gap: 5px;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .chatlog-page {
     padding: 10px;
   }
@@ -984,13 +984,13 @@ export default {
   .search-form {
     padding: 15px;
   }
-  
+
   .search-form .el-col {
     width: 100%;
   }
-  
+
   .search-form .el-row {
     flex-direction: column;
   }
 }
-</style> 
+</style>

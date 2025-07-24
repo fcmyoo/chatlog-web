@@ -13,11 +13,11 @@ export const compatApi = {
   // 直接代理到统一客户端的方法
   getChatLogs: (params) => apiClient.getChatLogs(params),
   getContacts: () => apiClient.getContacts(),
-  getChatrooms: () => apiClient.getChatrooms(), 
+  getChatrooms: () => apiClient.getChatrooms(),
   getSessions: () => apiClient.getSessions(),
   getChatLogsRaw: (params) => apiClient.chatlog.getChatLogsRaw(params),
   exportChatLogs: (params) => apiClient.chatlog.exportChatLogs(params),
-  
+
   // 媒体资源URL生成
   getImageUrl: (id) => apiClient.chatlog.getImageUrl(id),
   getVideoUrl: (id) => apiClient.chatlog.getVideoUrl(id),
@@ -28,4 +28,4 @@ export const compatApi = {
 
 // 新架构导出
 export { apiClient }
-export { aiApi } from './ApiClient.js' 
+export { aiApi } from './ApiClient.js'

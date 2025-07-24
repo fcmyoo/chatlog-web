@@ -10,8 +10,8 @@
     </div>
 
     <div v-else class="history-list">
-      <div 
-        v-for="item in histories" 
+      <div
+        v-for="item in histories"
         :key="item.id"
         class="history-item"
         @click="$emit('view', item)"
@@ -31,7 +31,7 @@
                 </el-button>
               </div>
             </div>
-            
+
             <div class="item-meta">
               <div class="meta-tags">
                 <el-tag size="small" :type="getTypeColor(item.analysisType)">
@@ -40,7 +40,7 @@
                 <span class="meta-text">{{ item.groupName }}</span>
                 <span class="meta-text">{{ item.messageCount }} 条消息</span>
               </div>
-              
+
               <div class="meta-info">
                 <span class="time">{{ formatTime(item.timestamp) }}</span>
                 <span class="file-size">{{ formatFileSize(item.fileSize) }}</span>
@@ -103,7 +103,7 @@ export default {
   },
   emits: ['view', 'delete', 'load-more'],
   methods: {
-    getTypeName(type) {
+    getTypeName (type) {
       const typeNames = {
         programming: '编程技术',
         science: '科学学习',
@@ -113,7 +113,7 @@ export default {
       return typeNames[type] || '数据分析'
     },
 
-    getTypeColor(type) {
+    getTypeColor (type) {
       const typeColors = {
         programming: 'primary',
         science: 'success',
@@ -123,30 +123,30 @@ export default {
       return typeColors[type] || ''
     },
 
-    formatTime(timestamp) {
+    formatTime (timestamp) {
       if (!timestamp) return ''
       const date = new Date(timestamp)
       const now = new Date()
       const diff = now - date
-      
+
       // 如果是今天
       if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
-        return '今天 ' + date.toLocaleTimeString('zh-CN', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
+        return '今天 ' + date.toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit'
         })
       }
-      
+
       // 如果是昨天
       const yesterday = new Date(now)
       yesterday.setDate(yesterday.getDate() - 1)
       if (date.getDate() === yesterday.getDate()) {
-        return '昨天 ' + date.toLocaleTimeString('zh-CN', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
+        return '昨天 ' + date.toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit'
         })
       }
-      
+
       // 其他情况显示完整日期
       return date.toLocaleString('zh-CN', {
         month: 'short',
@@ -156,14 +156,14 @@ export default {
       })
     },
 
-    formatFileSize(bytes) {
+    formatFileSize (bytes) {
       if (!bytes) return ''
       const sizes = ['B', 'KB', 'MB']
       const i = Math.floor(Math.log(bytes) / Math.log(1024))
       return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
     },
 
-    async confirmDelete(item) {
+    async confirmDelete (item) {
       try {
         await this.$confirm(
           `确定要删除分析记录"${item.title}"吗？此操作无法撤销。`,
@@ -175,9 +175,8 @@ export default {
             confirmButtonClass: 'el-button--danger'
           }
         )
-        
+
         this.$emit('delete', item)
-        
       } catch (error) {
         // 用户取消删除
       }
@@ -348,28 +347,28 @@ export default {
   .history-item {
     padding: 15px;
   }
-  
+
   .item-header {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .item-actions {
     opacity: 1;
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   .item-meta {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .meta-tags {
     flex-wrap: wrap;
   }
-  
+
   .item-details {
     flex-direction: column;
     gap: 8px;

@@ -82,7 +82,7 @@ import api from '@/api'
 
 export default {
   name: 'ChatRooms',
-  setup() {
+  setup () {
     const store = useStore()
     const router = useRouter()
     const loading = ref(false)
@@ -94,7 +94,7 @@ export default {
     // 过滤后的群聊列表
     const filteredChatrooms = computed(() => {
       if (!searchKeyword.value) return chatrooms.value
-      return chatrooms.value.filter(chatroom => 
+      return chatrooms.value.filter(chatroom =>
         (chatroom.Name || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
         (chatroom.Remark || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
         (chatroom.NickName || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
@@ -213,4 +213,4 @@ export default {
   justify-content: space-between;
   align-items: center;
 }
-</style> 
+</style>

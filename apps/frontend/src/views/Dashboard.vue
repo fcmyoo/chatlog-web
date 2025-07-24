@@ -44,8 +44,8 @@
       <div class="card chart-card">
         <div class="card-header">
           <h3>7天消息趋势</h3>
-          <el-button 
-            link 
+          <el-button
+            link
             @click="$router.push('/analytics')"
             style="color: #409eff"
           >
@@ -53,8 +53,8 @@
           </el-button>
         </div>
         <div class="card-body">
-          <v-chart 
-            :option="trendChartOption" 
+          <v-chart
+            :option="trendChartOption"
             style="height: 200px;"
             :loading="chartLoading"
           />
@@ -66,8 +66,8 @@
           <h3>聊天类型分布</h3>
         </div>
         <div class="card-body">
-          <v-chart 
-            :option="pieChartOption" 
+          <v-chart
+            :option="pieChartOption"
             style="height: 200px;"
             :loading="chartLoading"
           />
@@ -85,8 +85,8 @@
             <el-skeleton :rows="5" animated />
           </div>
           <div v-else>
-            <div 
-              v-for="session in recentSessions" 
+            <div
+              v-for="session in recentSessions"
               :key="session.id"
               class="session-item"
             >
@@ -111,9 +111,9 @@
         <div class="card-body">
           <el-row :gutter="20">
             <el-col :span="8">
-              <el-button 
-                type="primary" 
-                size="large" 
+              <el-button
+                type="primary"
+                size="large"
                 @click="$router.push('/chatlog')"
                 style="width: 100%"
               >
@@ -122,9 +122,9 @@
               </el-button>
             </el-col>
             <el-col :span="8">
-              <el-button 
-                type="success" 
-                size="large" 
+              <el-button
+                type="success"
+                size="large"
                 @click="$router.push('/analytics')"
                 style="width: 100%"
               >
@@ -133,9 +133,9 @@
               </el-button>
             </el-col>
             <el-col :span="8">
-              <el-button 
-                type="warning" 
-                size="large" 
+              <el-button
+                type="warning"
+                size="large"
                 @click="$router.push('/media')"
                 style="width: 100%"
               >
@@ -176,7 +176,7 @@ export default {
   components: {
     VChart
   },
-  setup() {
+  setup () {
     const store = useStore()
     const recentChatLogsCount = ref(0)
     const statsLoading = ref(false)
@@ -195,7 +195,7 @@ export default {
     const activeSessions = computed(() => {
       const now = dayjs()
       const sevenDaysAgo = now.subtract(7, 'day')
-      
+
       return sessions.value.filter(session => {
         if (!session.lastMessageTime) return false
         const lastTime = dayjs(session.lastMessageTime)
@@ -335,10 +335,10 @@ export default {
         // 获取最近7天的聊天记录作为样本
         const endDate = dayjs()
         const startDate = endDate.subtract(7, 'day')
-        
-        let allLogs = []
+
+        const allLogs = []
         const activeSessions = sessions.value.slice(0, 5) // 取前5个会话作为样本
-        
+
         for (const session of activeSessions) {
           try {
             const response = await api.getChatLogs({
@@ -346,7 +346,7 @@ export default {
               time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
               limit: 200
             })
-            
+
             if (response.data && Array.isArray(response.data)) {
               allLogs.push(...response.data)
             }
@@ -354,31 +354,31 @@ export default {
             console.warn(`获取会话 ${session.name} 聊天记录失败:`, error.message)
           }
         }
-        
+
         // 生成趋势数据
         const dates = []
         const data = []
         const dailyCount = {}
-        
+
         // 统计每日消息数
         allLogs.forEach(log => {
           const date = dayjs(log.time).format('YYYY-MM-DD')
           dailyCount[date] = (dailyCount[date] || 0) + 1
         })
-        
+
         // 生成7天数据
         for (let i = 6; i >= 0; i--) {
           const date = dayjs().subtract(i, 'day')
           const dateStr = date.format('YYYY-MM-DD')
           const displayDate = date.format('MM-DD')
-          
+
           dates.push(displayDate)
           data.push(dailyCount[dateStr] || 0)
         }
-        
+
         trendChartOption.value.xAxis.data = dates
         trendChartOption.value.series[0].data = data
-        
+
         // 更新饼图数据
         const typeCount = {
           text: 0,
@@ -386,7 +386,7 @@ export default {
           voice: 0,
           other: 0
         }
-        
+
         allLogs.forEach(log => {
           const content = log.content || ''
           if (content.includes('[图片]') || content.includes('image')) {
@@ -399,14 +399,13 @@ export default {
             typeCount.text++
           }
         })
-        
+
         pieChartOption.value.series[0].data = [
           { value: typeCount.text, name: '文本', itemStyle: { color: '#409eff' } },
           { value: typeCount.image, name: '图片', itemStyle: { color: '#67c23a' } },
           { value: typeCount.voice, name: '语音', itemStyle: { color: '#e6a23c' } },
           { value: typeCount.other, name: '其他', itemStyle: { color: '#f56c6c' } }
         ]
-        
       } catch (error) {
         console.error('初始化图表数据失败:', error)
         // 使用模拟数据作为后备
@@ -417,7 +416,7 @@ export default {
           dates.push(date)
           data.push(0) // 显示0而不是随机数据
         }
-        
+
         trendChartOption.value.xAxis.data = dates
         trendChartOption.value.series[0].data = data
       } finally {
@@ -437,7 +436,7 @@ export default {
         // 获取最近3天的数据作为样本
         const endDate = dayjs()
         const startDate = endDate.subtract(3, 'day')
-        
+
         // 获取第一个活跃会话的聊天记录
         const activeSession = sessions.value.find(s => s.lastMessageTime) || sessions.value[0]
         if (activeSession) {
@@ -446,7 +445,7 @@ export default {
             time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
             limit: 500
           })
-          
+
           recentChatLogsCount.value = response.data.length
         }
       } catch (error) {
@@ -469,10 +468,10 @@ export default {
           store.dispatch('fetchChatrooms'),
           store.dispatch('fetchSessions')
         ])
-        
+
         // 然后获取样本聊天记录
         await fetchSampleChatLogs()
-        
+
         // 最后初始化图表数据（使用真实数据）
         await initChartData()
       } catch (error) {
@@ -638,13 +637,13 @@ export default {
   .stats-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .chart-overview {
     grid-template-columns: 1fr;
   }
-  
+
   .dashboard-content {
     grid-template-columns: 1fr;
   }
 }
-</style> 
+</style>

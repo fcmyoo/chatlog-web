@@ -72,39 +72,45 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/api/ApiClient'
+import { handleError, withErrorHandling } from '@/utils/errorHandler'
+
+interface Contact {
+  UserName: string
+  NickName: string
+  Remark: string
+  Alias: string
+}
 
 export default {
-  name: 'Contacts',
-  setup() {
-    const store = useStore()
+  name: 'ContactsView',
+  setup () {
     const router = useRouter()
-    const loading = ref(false)
-    const contacts = ref([])
-    const searchKeyword = ref('')
-    const currentPage = ref(1)
-    const pageSize = ref(20)
+    const loading = ref<boolean>(false)
+    const contacts = ref<Contact[]>([])
+    const searchKeyword = ref<string>('')
+    const currentPage = ref<number>(1)
+    const pageSize = ref<number>(20)
 
     // 过滤后的联系人列表
     const filteredContacts = computed(() => {
       // 首先过滤掉包含 @chatroom 的联系人（这些属于聊天群）
-      const contactsWithoutChatrooms = contacts.value.filter(contact => 
-        !(contact.UserName || '').includes('@chatroom') 
-        && !(contact.UserName || '').includes('@openim') 
-        && !(contact.UserName || '').includes('@kefu.openim')
-        && !(contact.UserName || '').includes('@im.chatroom')
+      const contactsWithoutChatrooms = contacts.value.filter(contact =>
+        !(contact.UserName || '').includes('@chatroom') &&
+        !(contact.UserName || '').includes('@openim') &&
+        !(contact.UserName || '').includes('@kefu.openim') &&
+        !(contact.UserName || '').includes('@im.chatroom')
       )
-      
+
       // 如果没有搜索关键词，返回过滤后的所有联系人
       if (!searchKeyword.value) return contactsWithoutChatrooms
-      
+
       // 应用搜索过滤
-      return contactsWithoutChatrooms.filter(contact => 
+      return contactsWithoutChatrooms.filter(contact =>
         (contact.UserName || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
         (contact.NickName || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
         (contact.Remark || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
@@ -120,28 +126,26 @@ export default {
     })
 
     // 加载联系人列表
-    const loadContacts = async () => {
+    const loadContacts = withErrorHandling(async () => {
       loading.value = true
       try {
         const response = await api.getContacts()
         contacts.value = response.data || []
-        
+
         // 计算过滤后的联系人数量（排除聊天群）@openim
-        const actualContactsCount = contacts.value.filter(contact => 
-          !(contact.UserName || '').includes('@chatroom')
-          && !(contact.UserName || '').includes('@openim')
-          && !(contact.UserName || '').includes('@kefu.openim')
-          && !(contact.UserName || '').includes('@im.chatroom')
+        const actualContactsCount = contacts.value.filter(contact =>
+          !(contact.UserName || '').includes('@chatroom') &&
+          !(contact.UserName || '').includes('@openim') &&
+          !(contact.UserName || '').includes('@kefu.openim') &&
+          !(contact.UserName || '').includes('@im.chatroom')
         ).length
         const chatroomsCount = contacts.value.length - actualContactsCount
-        
+
         ElMessage.success(`加载了 ${actualContactsCount} 个联系人${chatroomsCount > 0 ? ` (已过滤 ${chatroomsCount} 个聊天群)` : ''}`)
-      } catch (error) {
-        ElMessage.error('加载联系人失败: ' + error.message)
       } finally {
         loading.value = false
       }
-    }
+    }, '加载联系人列表')
 
     // 搜索处理
     const handleSearch = () => {
@@ -149,17 +153,17 @@ export default {
     }
 
     // 分页处理
-    const handlePageChange = (page) => {
+    const handlePageChange = (page: number) => {
       currentPage.value = page
     }
 
     // 行点击处理
-    const handleRowClick = (row) => {
+    const handleRowClick = (row: Contact) => {
       console.log('联系人详情:', row)
     }
 
     // 查看聊天记录
-    const viewChatHistory = (contact) => {
+    const viewChatHistory = (contact: Contact) => {
       router.push({
         path: '/chatlog',
         query: {
@@ -169,13 +173,13 @@ export default {
     }
 
     // 复制联系人ID
-    const copyContactId = (contact) => {
+    const copyContactId = (contact: Contact) => {
       const id = contact.UserName || contact.NickName || contact.Alias
       if (id) {
         navigator.clipboard.writeText(id).then(() => {
           ElMessage.success('联系人ID已复制到剪贴板')
-        }).catch(() => {
-          ElMessage.error('复制失败')
+        }).catch((error) => {
+          handleError(error, '复制联系人ID')
         })
       } else {
         ElMessage.warning('无可复制的ID')
@@ -233,4 +237,4 @@ export default {
   justify-content: space-between;
   align-items: center;
 }
-</style> 
+</style>

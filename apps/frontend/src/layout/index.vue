@@ -55,8 +55,8 @@
       <!-- 顶部导航栏 -->
       <div class="navbar">
         <div class="navbar-left">
-          <el-button 
-            link 
+          <el-button
+            link
             @click="collapsed = !collapsed"
             :icon="collapsed ? 'Expand' : 'Fold'"
           />
@@ -85,7 +85,7 @@ import { useRoute } from 'vue-router'
 
 export default {
   name: 'Layout',
-  setup() {
+  setup () {
     const collapsed = ref(false)
     const store = useStore()
     const route = useRoute()
@@ -152,4 +152,4 @@ export default {
   display: flex;
   align-items: center;
 }
-</style> 
+</style>
