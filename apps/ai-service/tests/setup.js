@@ -1,6 +1,9 @@
-// Jest测试环境设置文件
-const AIServiceFixtures = require('./fixtures/AIServiceFixtures');
-const DatabaseTestFixtures = require('../../packages/shared/test/DatabaseTestFixtures');
+/**
+ * Jest测试环境设置文件
+ * 已迁移到 TypeScript
+ */
+import { jest } from '@jest/globals';
+import AIServiceFixtures from './fixtures/AIServiceFixtures';
 
 // 设置环境变量
 process.env.NODE_ENV = 'test';
@@ -8,7 +11,6 @@ process.env.LOG_LEVEL = 'error'; // 减少测试时的日志输出
 
 // 创建全局夹具实例
 const globalAIFixtures = new AIServiceFixtures();
-const globalDBFixtures = new DatabaseTestFixtures();
 
 // 模拟全局对象
 global.console = {
@@ -26,9 +28,6 @@ jest.setTimeout(15000);
 
 // 在每个测试前设置
 beforeEach(async () => {
-  // 初始化数据库夹具
-  await globalDBFixtures.initialize();
-  
   // 重置AI服务夹具
   await globalAIFixtures.reset();
 });
@@ -41,15 +40,11 @@ afterEach(async () => {
   
   // 清理AI服务夹具
   await globalAIFixtures.cleanup();
-  
-  // 清理数据库夹具
-  await globalDBFixtures.cleanup();
 });
 
 // 在所有测试完成后进行最终清理
 afterAll(async () => {
   await globalAIFixtures.cleanup();
-  await globalDBFixtures.cleanup();
 });
 
 // 全局测试工具函数
@@ -85,8 +80,7 @@ global.testUtils = {
   createMockNext: () => jest.fn(),
   
   // 获取全局夹具
-  getAIFixtures: () => globalAIFixtures,
-  getDBFixtures: () => globalDBFixtures
+  getAIFixtures: () => globalAIFixtures
 };
 
 // 模拟外部依赖

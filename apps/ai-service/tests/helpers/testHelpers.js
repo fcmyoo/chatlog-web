@@ -1,6 +1,7 @@
-const request = require('supertest');
-const fs = require('fs-extra');
-const path = require('path');
+import request from 'supertest';
+import fs from 'fs-extra';
+import path from 'path';
+import { jest } from '@jest/globals';
 
 /**
  * 测试辅助工具类
@@ -183,4 +184,4 @@ class TestHelpers {
   }
 }
 
-module.exports = TestHelpers;
+export default TestHelpers;

@@ -1,0 +1,118 @@
+{
+  "name": "Chatlog Web Frontend - 测试覆盖率配置",
+  "description": "前端项目测试覆盖率标准和监控配置",
+  "version": "1.0.0",
+  "coverage": {
+    "standards": {
+      "minimum": {
+        "global": {
+          "statements": 80,
+          "branches": 80,
+          "functions": 80,
+          "lines": 80
+        },
+        "perFile": {
+          "statements": 70,
+          "branches": 70,
+          "functions": 70,
+          "lines": 70
+        }
+      },
+      "target": {
+        "global": {
+          "statements": 90,
+          "branches": 85,
+          "functions": 90,
+          "lines": 90
+        },
+        "perFile": {
+          "statements": 85,
+          "branches": 80,
+          "functions": 85,
+          "lines": 85
+        }
+      }
+    },
+    "critical_files": [
+      "src/api/**/*.ts",
+      "src/stores/**/*.ts",
+      "src/utils/**/*.ts",
+      "src/types/**/*.ts"
+    ],
+    "reporting": {
+      "formats": ["html", "json", "lcov", "text", "text-summary"],
+      "output_directory": "./coverage",
+      "include_patterns": ["src/**/*.{js,ts,vue}"],
+      "exclude_patterns": [
+        "src/test/**",
+        "src/**/*.d.ts",
+        "src/**/*.spec.ts",
+        "src/**/*.test.ts",
+        "src/main.ts",
+        "src/vite-env.d.ts",
+        "node_modules/**"
+      ]
+    },
+    "monitoring": {
+      "check_on_pr": true,
+      "fail_on_coverage_decrease": true,
+      "coverage_decrease_threshold": 2,
+      "notify_on_low_coverage": true,
+      "generate_badges": true
+    }
+  },
+  "test_categories": {
+    "unit_tests": {
+      "description": "组件、函数、类的单元测试",
+      "target_coverage": 90,
+      "patterns": ["src/**/*.spec.ts", "src/**/*.test.ts"]
+    },
+    "integration_tests": {
+      "description": "API集成和模块间交互测试",
+      "target_coverage": 85,
+      "patterns": ["src/test/integration/**/*.spec.ts"]
+    },
+    "component_tests": {
+      "description": "Vue组件测试",
+      "target_coverage": 85,
+      "patterns": ["src/test/components/**/*.spec.ts"]
+    }
+  },
+  "quality_gates": {
+    "pr_requirements": {
+      "min_coverage": 80,
+      "coverage_decrease_allowed": false,
+      "new_code_coverage": 90
+    },
+    "ci_requirements": {
+      "coverage_threshold": 80,
+      "fail_build_on_threshold": true,
+      "generate_reports": true
+    }
+  },
+  "best_practices": [
+    "每个新功能都应该有对应的测试",
+    "关键业务逻辑覆盖率应达到95%以上",
+    "测试应该覆盖正常流程和异常情况",
+    "Mock外部依赖以确保测试独立性",
+    "定期审查和更新测试用例"
+  ],
+  "tools_integration": {
+    "vitest": {
+      "config_file": "vitest.config.ts",
+      "commands": {
+        "test": "vitest",
+        "coverage": "vitest --coverage",
+        "watch": "vitest --watch"
+      }
+    },
+    "playwright": {
+      "config_file": "playwright.config.ts", 
+      "commands": {
+        "e2e": "playwright test",
+        "e2e_ui": "playwright test --ui",
+        "e2e_debug": "playwright test --debug"
+      }
+    }
+  }
+}

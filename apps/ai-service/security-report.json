@@ -1,0 +1,29 @@
+# 安全检查报告
+生成时间: Thu 24 Jul 2025 05:31:25 PM CST
+
+## NPM 审计结果
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {},
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 105,
+      "dev": 420,
+      "optional": 33,
+      "peer": 25,
+      "peerOptional": 0,
+      "total": 542
+    }
+  }
+}
+
+## 依赖版本检查
+检查失败

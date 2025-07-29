@@ -6,14 +6,15 @@ import Contacts from '@/views/Contacts.vue'
 // Mock API
 vi.mock('@/api/ApiClient', () => ({
   default: {
-    getContacts: vi.fn().mockResolvedValue({ data: [] })
+    getContacts: vi.fn().mockResolvedValue({ data: [] }),
+    searchContacts: vi.fn().mockResolvedValue({ data: [] })
   }
 }))
 
 // Mock error handler
 vi.mock('@/utils/errorHandler', () => ({
   handleError: vi.fn(),
-  withErrorHandling: (fn: Function) => fn
+  withErrorHandling: (fn: () => void) => fn
 }))
 
 // Mock router
@@ -90,7 +91,7 @@ describe('Contacts.vue', () => {
 
     // 直接调用组件的搜索处理方法
     wrapper.vm.searchKeyword = 'test'
-    wrapper.vm.handleSearch()
+    await wrapper.vm.handleSearch()
     await nextTick()
 
     // 验证搜索功能

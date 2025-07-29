@@ -22,8 +22,9 @@
           </el-input>
         </div>
 
-        <div v-if="loading" class="loading">
+        <div v-if="loading || searching" class="loading">
           <el-skeleton :rows="10" animated />
+          <div v-if="searching" class="search-loading-text">正在搜索联系人...</div>
         </div>
         <div v-else-if="!filteredContacts.length" class="empty-state">
           <el-empty description="暂无联系人数据" />
@@ -35,10 +36,10 @@
             style="width: 100%"
             @row-click="handleRowClick"
           >
-            <el-table-column prop="UserName" label="用户名" width="200" />
-            <el-table-column prop="NickName" label="昵称" width="200" />
-            <el-table-column prop="Remark" label="备注" width="200" />
-            <el-table-column prop="Alias" label="别名" width="200" />
+            <el-table-column prop="username" label="用户名" width="200" />
+            <el-table-column prop="alias" label="别名" width="200" />
+            <el-table-column prop="nickname" label="昵称" width="200" />
+            <el-table-column prop="remark" label="备注" width="200" />
             <el-table-column label="操作" width="200">
               <template #default="scope">
                 <el-button
@@ -72,141 +73,180 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '@/api/ApiClient'
 import { handleError, withErrorHandling } from '@/utils/errorHandler'
+import type { Contact } from '@/types'
 
-interface Contact {
-  UserName: string
-  NickName: string
-  Remark: string
-  Alias: string
+// 路由
+const router = useRouter()
+
+// 响应式状态
+const loading = ref<boolean>(false)
+const searching = ref<boolean>(false)
+const contacts = ref<Contact[]>([])
+const searchResults = ref<Contact[]>([])
+const searchKeyword = ref<string>('')
+const currentPage = ref<number>(1)
+const pageSize = ref<number>(20)
+
+// 过滤后的联系人列表
+const filteredContacts = computed(() => {
+  // 如果有搜索关键词，使用搜索结果
+  if (searchKeyword.value && Array.isArray(searchResults.value) && searchResults.value.length > 0) {
+    return searchResults.value.filter(contact =>
+      !(contact.username || '').includes('@chatroom') &&
+      !(contact.username || '').includes('@openim') &&
+      !(contact.username || '').includes('@kefu.openim') &&
+      !(contact.username || '').includes('@im.chatroom')
+    )
+  }
+
+  // 确保contacts.value是数组，否则使用全部联系人，过滤掉聊天群
+  if (!Array.isArray(contacts.value)) {
+    console.warn('contacts.value不是数组:', contacts.value)
+    return []
+  }
+
+  return contacts.value.filter(contact =>
+    !(contact.username || '').includes('@chatroom') &&
+    !(contact.username || '').includes('@openim') &&
+    !(contact.username || '').includes('@kefu.openim') &&
+    !(contact.username || '').includes('@im.chatroom')
+  )
+})
+
+// 分页后的联系人列表
+const paginatedContacts = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredContacts.value.slice(start, end)
+})
+
+// 加载联系人列表
+const loadContacts = withErrorHandling(async () => {
+  loading.value = true
+  try {
+    const response = await api.getContacts()
+    console.log('加载联系人列表：API响应:', response)
+    
+    // 确保返回的数据是数组
+    const contactsData = response.data || []
+    if (!Array.isArray(contactsData)) {
+      console.error('API返回的联系人数据不是数组:', contactsData)
+      contacts.value = []
+      ElMessage.error({ message: 'API返回的数据格式错误' as any })
+      return
+    }
+    
+    contacts.value = contactsData
+
+    // 计算过滤后的联系人数量（排除聊天群）
+    const actualContactsCount = contacts.value.filter(contact =>
+      !(contact.username || '').includes('@chatroom') &&
+      !(contact.username || '').includes('@openim') &&
+      !(contact.username || '').includes('@kefu.openim') &&
+      !(contact.username || '').includes('@im.chatroom')
+    ).length
+    const chatroomsCount = contacts.value.length - actualContactsCount
+
+    ElMessage.success({
+      message: `加载了 ${actualContactsCount} 个联系人${chatroomsCount > 0 ? ` (已过滤 ${chatroomsCount} 个聊天群)` : ''}` as any
+    })
+  } finally {
+    loading.value = false
+  }
+}, '加载联系人列表')
+
+// 搜索处理
+const handleSearch = async (): Promise<void> => {
+  currentPage.value = 1
+  
+  if (!searchKeyword.value.trim()) {
+    // 如果搜索关键词为空，清空搜索结果
+    searchResults.value = []
+    return
+  }
+
+  // 调用后端搜索API
+  await searchContacts(searchKeyword.value.trim())
 }
 
-export default {
-  name: 'ContactsView',
-  setup () {
-    const router = useRouter()
-    const loading = ref<boolean>(false)
-    const contacts = ref<Contact[]>([])
-    const searchKeyword = ref<string>('')
-    const currentPage = ref<number>(1)
-    const pageSize = ref<number>(20)
+// 搜索联系人
+const searchContacts = withErrorHandling(async (keyword: string) => {
+  searching.value = true
+  try {
+    const response = await api.searchContacts(keyword)
+    console.log('搜索API响应:', response)
+    
+    // 确保返回的数据是数组
+    const searchData = response.data || []
+    if (!Array.isArray(searchData)) {
+      console.error('搜索API返回的数据不是数组:', searchData)
+      searchResults.value = []
+      ElMessage.error({ message: '搜索API返回的数据格式错误' as any })
+      return
+    }
+    
+    searchResults.value = searchData
 
-    // 过滤后的联系人列表
-    const filteredContacts = computed(() => {
-      // 首先过滤掉包含 @chatroom 的联系人（这些属于聊天群）
-      const contactsWithoutChatrooms = contacts.value.filter(contact =>
-        !(contact.UserName || '').includes('@chatroom') &&
-        !(contact.UserName || '').includes('@openim') &&
-        !(contact.UserName || '').includes('@kefu.openim') &&
-        !(contact.UserName || '').includes('@im.chatroom')
-      )
+    const actualContactsCount = searchResults.value.filter(contact =>
+      !(contact.username || '').includes('@chatroom') &&
+      !(contact.username || '').includes('@openim') &&
+      !(contact.username || '').includes('@kefu.openim') &&
+      !(contact.username || '').includes('@im.chatroom')
+    ).length
 
-      // 如果没有搜索关键词，返回过滤后的所有联系人
-      if (!searchKeyword.value) return contactsWithoutChatrooms
-
-      // 应用搜索过滤
-      return contactsWithoutChatrooms.filter(contact =>
-        (contact.UserName || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-        (contact.NickName || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-        (contact.Remark || '').toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-        (contact.Alias || '').toLowerCase().includes(searchKeyword.value.toLowerCase())
-      )
+    ElMessage.success({
+      message: `找到 ${actualContactsCount} 个匹配的联系人` as any
     })
+  } finally {
+    searching.value = false
+  }
+}, '搜索联系人')
 
-    // 分页后的联系人列表
-    const paginatedContacts = computed(() => {
-      const start = (currentPage.value - 1) * pageSize.value
-      const end = start + pageSize.value
-      return filteredContacts.value.slice(start, end)
+// 分页处理
+const handlePageChange = (page: number): void => {
+  currentPage.value = page
+}
+
+// 行点击处理
+const handleRowClick = (row: Contact): void => {
+  console.log('联系人详情:', row)
+}
+
+// 查看聊天记录
+const viewChatHistory = (contact: Contact): void => {
+  router.push({
+    path: '/chatlog',
+    query: {
+      talker: contact.username || contact.nickname
+    }
+  })
+}
+
+// 复制联系人ID
+const copyContactId = (contact: Contact): void => {
+  const id = contact.username || contact.nickname
+  if (id) {
+    navigator.clipboard.writeText(id).then(() => {
+      ElMessage.success({ message: '联系人ID已复制到剪贴板' as any })
+    }).catch((error) => {
+      handleError(error, '复制联系人ID')
     })
-
-    // 加载联系人列表
-    const loadContacts = withErrorHandling(async () => {
-      loading.value = true
-      try {
-        const response = await api.getContacts()
-        contacts.value = response.data || []
-
-        // 计算过滤后的联系人数量（排除聊天群）@openim
-        const actualContactsCount = contacts.value.filter(contact =>
-          !(contact.UserName || '').includes('@chatroom') &&
-          !(contact.UserName || '').includes('@openim') &&
-          !(contact.UserName || '').includes('@kefu.openim') &&
-          !(contact.UserName || '').includes('@im.chatroom')
-        ).length
-        const chatroomsCount = contacts.value.length - actualContactsCount
-
-        ElMessage.success(`加载了 ${actualContactsCount} 个联系人${chatroomsCount > 0 ? ` (已过滤 ${chatroomsCount} 个聊天群)` : ''}`)
-      } finally {
-        loading.value = false
-      }
-    }, '加载联系人列表')
-
-    // 搜索处理
-    const handleSearch = () => {
-      currentPage.value = 1
-    }
-
-    // 分页处理
-    const handlePageChange = (page: number) => {
-      currentPage.value = page
-    }
-
-    // 行点击处理
-    const handleRowClick = (row: Contact) => {
-      console.log('联系人详情:', row)
-    }
-
-    // 查看聊天记录
-    const viewChatHistory = (contact: Contact) => {
-      router.push({
-        path: '/chatlog',
-        query: {
-          talker: contact.UserName || contact.NickName || contact.Alias
-        }
-      })
-    }
-
-    // 复制联系人ID
-    const copyContactId = (contact: Contact) => {
-      const id = contact.UserName || contact.NickName || contact.Alias
-      if (id) {
-        navigator.clipboard.writeText(id).then(() => {
-          ElMessage.success('联系人ID已复制到剪贴板')
-        }).catch((error) => {
-          handleError(error, '复制联系人ID')
-        })
-      } else {
-        ElMessage.warning('无可复制的ID')
-      }
-    }
-
-    onMounted(() => {
-      loadContacts()
-    })
-
-    return {
-      loading,
-      contacts,
-      searchKeyword,
-      currentPage,
-      pageSize,
-      filteredContacts,
-      paginatedContacts,
-      loadContacts,
-      handleSearch,
-      handlePageChange,
-      handleRowClick,
-      viewChatHistory,
-      copyContactId
-    }
+  } else {
+    ElMessage.warning({ message: '无可复制的ID' as any })
   }
 }
+
+// 组件挂载
+onMounted(() => {
+  loadContacts()
+})
 </script>
 
 <style scoped>
@@ -236,5 +276,12 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.search-loading-text {
+  text-align: center;
+  margin-top: 10px;
+  color: #606266;
+  font-size: 14px;
 }
 </style>

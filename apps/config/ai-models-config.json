@@ -1,0 +1,112 @@
+{
+  "openai:gpt-4": {
+    "provider": "OpenAI",
+    "model": "gpt-4",
+    "endpoint": "https://api.openai.com/v1",
+    "apiKey": "",
+    "maxTokens": 4096,
+    "temperature": 0.7,
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "retryDelay": 1000,
+    "costPer1kTokens": 0.03,
+    "capabilities": {
+      "supportsStreaming": true,
+      "supportsImages": true,
+      "supportsFunctionCalling": true,
+      "contextWindow": 8192
+    },
+    "rateLimit": {
+      "requestsPerMinute": 60,
+      "tokensPerMinute": 90000
+    },
+    "enabled": true,
+    "priority": 1,
+    "createdAt": "2025-07-24T01:00:50.043Z",
+    "updatedAt": "2025-07-24T01:00:50.043Z",
+    "version": "1.0.0"
+  },
+  "openai:gpt-3.5-turbo": {
+    "provider": "OpenAI",
+    "model": "gpt-3.5-turbo",
+    "endpoint": "https://api.openai.com/v1",
+    "apiKey": "",
+    "maxTokens": 4096,
+    "temperature": 0.7,
+    "timeout": 30000,
+    "retryAttempts": 3,
+    "retryDelay": 1000,
+    "costPer1kTokens": 0.002,
+    "capabilities": {
+      "supportsStreaming": true,
+      "supportsImages": false,
+      "supportsFunctionCalling": true,
+      "contextWindow": 4096
+    },
+    "rateLimit": {
+      "requestsPerMinute": 60,
+      "tokensPerMinute": 90000
+    },
+    "enabled": true,
+    "priority": 2,
+    "createdAt": "2025-07-24T01:00:50.043Z",
+    "updatedAt": "2025-07-24T01:00:50.043Z",
+    "version": "1.0.0"
+  },
+  "deepseek:deepseek-reasoner": {
+    "provider": "DeepSeek",
+    "model": "deepseek-reasoner",
+    "endpoint": "https://api.deepseek.com/v1",
+    "apiKey": "",
+    "maxTokens": 64000,
+    "temperature": 1,
+    "timeout": 300000,
+    "retryAttempts": 3,
+    "retryDelay": 5000,
+    "costPer1kTokens": 0.008,
+    "capabilities": {
+      "supportsStreaming": true,
+      "supportsImages": false,
+      "supportsFunctionCalling": false,
+      "contextWindow": 64000
+    },
+    "rateLimit": {
+      "requestsPerMinute": 30,
+      "tokensPerMinute": 60000
+    },
+    "enabled": true,
+    "priority": 1,
+    "createdAt": "2025-07-24T01:00:50.043Z",
+    "updatedAt": "2025-07-24T01:00:50.043Z",
+    "version": "1.0.0"
+  },
+  "google:gemini-2.5-pro": {
+    "provider": "Google",
+    "model": "gemini-2.5-pro",
+    "endpoint": "https://generativelanguage.googleapis.com/v1beta",
+    "apiKey": "",
+    "maxTokens": 32768,
+    "temperature": 1,
+    "timeout": 60000,
+    "retryAttempts": 3,
+    "retryDelay": 2000,
+    "costPer1kTokens": 0.01,
+    "capabilities": {
+      "supportsStreaming": true,
+      "supportsImages": true,
+      "supportsAudio": true,
+      "supportsVideo": true,
+      "supportsFunctionCalling": true,
+      "contextWindow": 32768
+    },
+    "rateLimit": {
+      "requestsPerMinute": 60,
+      "tokensPerMinute": 120000
+    },
+    "enabled": true,
+    "priority": 1,
+    "createdAt": "2025-07-24T01:00:50.043Z",
+    "updatedAt": "2025-07-24T01:00:50.043Z",
+    "version": "1.0.0"
+  }
+}

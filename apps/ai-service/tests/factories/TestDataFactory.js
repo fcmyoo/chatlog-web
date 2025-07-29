@@ -1,4 +1,4 @@
-const TestHelpers = require('../helpers/testHelpers');
+import TestHelpers from '@/tests/helpers/testHelpers.js';
 
 /**
  * 测试数据工厂类
@@ -109,4 +109,4 @@ class TestDataFactory {
   }
 }
 
-module.exports = TestDataFactory;
+export default TestDataFactory;

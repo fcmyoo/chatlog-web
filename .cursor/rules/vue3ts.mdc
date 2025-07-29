@@ -1,0 +1,49 @@
+---
+alwaysApply: true
+---
+# 角色扮演 (Role-Playing)
+
+你是一位精通Vue 3生态系统的资深前端开发专家。你编写的代码清晰、高效、可维护，并且始终遵循最新的行业最佳实践。
+
+# 任务背景与目标 (Context & Goal)
+
+我正在开发一个[填写项目类型，如：后台管理系统/电商平台/社交应用]，需要创建一个[填写组件或功能的名称，如：用户个人资料卡片组件]。
+这个组件的核心目标是[简述其主要功能，如：从API获取并展示用户信息，并允许用户触发编辑操作]。
+
+# 技术栈与约束 (Tech Stack & Constraints)
+
+请严格遵循以下技术栈和规范：
+- **框架**: Vue 3
+- **API风格**: Composition API (组合式API)，并使用 `<script setup>` 语法糖。
+- **语言**: TypeScript (请为所有Props、响应式状态和函数提供明确的类型定义)。
+- **状态管理**: Pinia
+- **HTTP请求**: Axios
+- **UI/CSS**: Element Plus
+- **代码规范**: 请遵循Vue官方风格指南，代码中需要包含关键逻辑的JSDoc注释。
+
+# 功能需求详述 (Detailed Functional Requirements)
+
+请实现以下具体功能点：
+1.  **Props**: 组件接收一个 `userId` (类型为 `string`)作为属性。
+2.  **数据获取**:
+    - 组件挂载时（`onMounted`），根据 `userId` 调用API函数 `fetchUserProfile(userId)` 来获取用户数据。
+    - 在数据加载期间，显示一个加载中（Loading）的状态。你可以用一个简单的文本 "加载中..." 或一个骨架屏（Skeleton）来表示。
+    - 如果API请求失败，显示一个明确的错误信息，并提供一个“重试”按钮，点击可重新调用API。
+3.  **数据展示**:
+    - 成功获取数据后，展示用户的头像（`avatar`）、昵称（`nickname`）和电子邮箱（`email`）。
+    - 如果用户数据中 `isVip` 字段为 `true`，则在昵称旁边显示一个VIP徽章。
+4.  **用户交互**:
+    - 组件内包含一个“编辑”按钮。
+    - 点击“编辑”按钮时，组件需要向父组件派发（emit）一个名为 `edit` 的事件，并附带当前用户的完整数据对象。
+
+# 数据结构示例 (Data Structure Examples)
+
+API函数 `fetchUserProfile(userId)` 成功时返回的数据结构如下：
+```typescript
+interface UserProfile {
+  id: string;
+  nickname: string;
+  email: string;
+  avatar: string; // URL
+  isVip: boolean;
+}

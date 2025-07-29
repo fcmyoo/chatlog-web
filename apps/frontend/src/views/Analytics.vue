@@ -63,9 +63,9 @@
           <h3>消息趋势分析</h3>
           <div class="chart-controls">
             <el-radio-group v-model="trendPeriod" size="small" @change="updateTrendChart">
-              <el-radio-button label="7d">7天</el-radio-button>
-              <el-radio-button label="30d">30天</el-radio-button>
-              <el-radio-button label="90d">90天</el-radio-button>
+              <el-radio-button value="7d">7天</el-radio-button>
+              <el-radio-button value="30d">30天</el-radio-button>
+              <el-radio-button value="90d">90天</el-radio-button>
             </el-radio-group>
           </div>
         </div>
@@ -1093,8 +1093,7 @@ export default {
   position: relative;
 }
 
-/* 动画样式 */
-@import 'animate.css';
+/* 动画样式已在main.ts中全局导入 */
 
 /* 响应式设计 */
 @media (max-width: 768px) {

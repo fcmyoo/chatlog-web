@@ -1,0 +1,208 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 每周一早上8点运行安全扫描
+    - cron: '0 8 * * 1'
+
+jobs:
+  dependency-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run npm audit
+        continue-on-error: true
+        run: |
+          echo "## 依赖安全扫描结果 🔒" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 前端依赖扫描
+          echo "### 前端应用依赖扫描" >> $GITHUB_STEP_SUMMARY
+          cd apps/frontend
+          if pnpm audit --audit-level moderate; then
+            echo "✅ 前端依赖安全检查通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ 前端依赖发现安全问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # AI服务依赖扫描
+          echo "### AI服务依赖扫描" >> $GITHUB_STEP_SUMMARY
+          cd ../ai-service
+          if pnpm audit --audit-level moderate; then
+            echo "✅ AI服务依赖安全检查通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ AI服务依赖发现安全问题" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate security report
+        run: |
+          mkdir -p security-reports
+          
+          # 生成前端安全报告
+          cd apps/frontend
+          pnpm audit --json > ../../security-reports/frontend-audit.json || true
+          
+          # 生成AI服务安全报告
+          cd ../ai-service
+          pnpm audit --json > ../../security-reports/ai-service-audit.json || true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: security-reports/
+
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{matrix.language}}"
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  license-check:
+    name: License Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install license checker
+        run: npm install -g license-checker
+
+      - name: Check licenses
+        run: |
+          echo "## 许可证检查结果 📄" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 检查前端许可证
+          echo "### 前端应用许可证" >> $GITHUB_STEP_SUMMARY
+          cd apps/frontend
+          pnpm install --frozen-lockfile
+          license-checker --summary --onlyAllow 'MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;CC0-1.0;Unlicense' || true
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 检查AI服务许可证
+          echo "### AI服务许可证" >> $GITHUB_STEP_SUMMARY
+          cd ../ai-service
+          pnpm install --frozen-lockfile
+          license-checker --summary --onlyAllow 'MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;CC0-1.0;Unlicense' || true
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, codeql-analysis, secret-scan, license-check]
+    if: always()
+    
+    steps:
+      - name: Create security summary
+        run: |
+          echo "## 安全扫描总结 🛡️" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "扫描时间: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 扫描结果" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.dependency-scan.result }}" == "success" ]; then
+            echo "✅ 依赖安全扫描: 通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ 依赖安全扫描: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.codeql-analysis.result }}" == "success" ]; then
+            echo "✅ 代码质量分析: 通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ 代码质量分析: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.secret-scan.result }}" == "success" ]; then
+            echo "✅ 密钥扫描: 通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ 密钥扫描: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.license-check.result }}" == "success" ]; then
+            echo "✅ 许可证检查: 通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ 许可证检查: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 建议" >> $GITHUB_STEP_SUMMARY
+          echo "- 定期更新依赖包到最新版本" >> $GITHUB_STEP_SUMMARY
+          echo "- 及时修复发现的安全漏洞" >> $GITHUB_STEP_SUMMARY
+          echo "- 保持良好的代码安全实践" >> $GITHUB_STEP_SUMMARY
+          echo "- 使用兼容的开源许可证" >> $GITHUB_STEP_SUMMARY

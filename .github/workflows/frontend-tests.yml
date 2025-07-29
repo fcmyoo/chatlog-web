@@ -1,0 +1,202 @@
+name: Frontend Tests
+
+on:
+  push:
+    branches: [main, develop, feature/monorepo-architecture-refactor]
+    paths:
+      - 'apps/frontend/**'
+      - '.github/workflows/frontend-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/frontend/**'
+
+jobs:
+  test:
+    name: Run Frontend Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    defaults:
+      run:
+        working-directory: apps/frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linting
+        run: pnpm run lint:check
+
+      - name: Run type checking
+        run: pnpm run type-check
+
+      - name: Run unit tests with coverage
+        run: pnpm run test:coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: apps/frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+
+      - name: Upload coverage to GitHub
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report-${{ matrix.node-version }}
+          path: apps/frontend/coverage/
+
+      - name: Coverage Badge
+        if: matrix.node-version == '20.x' && github.ref == 'refs/heads/main'
+        uses: tj-actions/coverage-badge-js@v1
+        with:
+          coverage-file: apps/frontend/coverage/coverage-summary.json
+          output: apps/frontend/coverage/badge.svg
+
+  e2e-test:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    needs: test
+    
+    defaults:
+      run:
+        working-directory: apps/frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Run Playwright tests
+        run: pnpm run test:e2e
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/frontend/playwright-report/
+          retention-days: 30
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [test, e2e-test]
+    
+    defaults:
+      run:
+        working-directory: apps/frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for production
+        run: pnpm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist-files
+          path: apps/frontend/dist/
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test, e2e-test, build]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Create test summary
+        run: |
+          echo "## 测试结果摘要 📊" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 单元测试 🧪" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            echo "✅ 单元测试通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 单元测试失败" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### E2E测试 🎭" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.e2e-test.result }}" == "success" ]; then
+            echo "✅ E2E测试通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ E2E测试失败" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 构建 🏗️" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "✅ 构建成功" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 构建失败" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 报告链接 📋" >> $GITHUB_STEP_SUMMARY
+          echo "- [覆盖率报告](artifacts/coverage-report-20.x/index.html)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Playwright报告](artifacts/playwright-report/index.html)" >> $GITHUB_STEP_SUMMARY

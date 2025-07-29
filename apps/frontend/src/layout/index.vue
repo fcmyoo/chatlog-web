@@ -27,6 +27,10 @@
           <el-icon><Magic /></el-icon>
           <span>AI智能分析</span>
         </el-menu-item>
+        <el-menu-item index="/ai-service">
+          <el-icon><Setting /></el-icon>
+          <span>AI服务管理</span>
+        </el-menu-item>
         <el-menu-item index="/chatlog">
           <el-icon><ChatDotRound /></el-icon>
           <span>聊天记录</span>
@@ -78,40 +82,34 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import { ref } from 'vue'
-import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
+import { useMainStore } from '@/stores'
 
-export default {
-  name: 'Layout',
-  setup () {
-    const collapsed = ref(false)
-    const store = useStore()
-    const route = useRoute()
+// Pinia Store
+const mainStore = useMainStore()
 
-    const refreshData = () => {
-      // 根据当前路由刷新对应数据
-      const routeName = route.name
-      switch (routeName) {
-        case 'Contacts':
-          store.dispatch('fetchContacts')
-          break
-        case 'ChatRooms':
-          store.dispatch('fetchChatrooms')
-          break
-        case 'Sessions':
-          store.dispatch('fetchSessions')
-          break
-        default:
-          break
-      }
-    }
+// 组件状态
+const collapsed = ref<boolean>(false)
+const route = useRoute()
 
-    return {
-      collapsed,
-      refreshData
-    }
+// 刷新数据方法
+const refreshData = (): void => {
+  // 根据当前路由刷新对应数据
+  const routeName = route.name as string
+  switch (routeName) {
+    case 'Contacts':
+      mainStore.fetchContacts()
+      break
+    case 'ChatRooms':
+      mainStore.fetchChatrooms()
+      break
+    case 'Sessions':
+      mainStore.fetchSessions()
+      break
+    default:
+      break
   }
 }
 </script>

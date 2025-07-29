@@ -1,20 +1,29 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
 
-// 导入统一配置管理器和向后兼容的服务配置
-const { getGlobalConfig } = require('../../packages/config/index');
-const { services } = require('../../packages/config/services');
+// ES模块中获取__dirname的替代方案
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+dotenv.config();
+
+// 导入统一配置管理器和向后兼容的服务配置 (使用createRequire处理CommonJS模块)
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import { getGlobalConfig } from '../../packages/config/index.js';
+const { services } = require('../../packages/config/services.js');
 
 // 导入统一错误处理
-const { errorMiddleware, notFoundHandler } = require('./middleware/errorHandler');
+import { errorMiddleware, notFoundHandler } from './middleware/errorHandler.js';
 
 // 导入性能优化中间件
-const { createAIServiceMiddleware, createMetricsEndpoint, createHealthCheck } = require('../../packages/performance/middleware');
+import { createAIServiceMiddleware, createMetricsEndpoint, createHealthCheck } from '../../packages/performance/middleware.js';
 
 // 导入可观测性系统
-const { ObservabilityManager } = require('../../packages/observability');
+import { ObservabilityManager } from '../../packages/observability/index.js';
 
 const app = express();
 const PORT = services.ai.port;
@@ -200,7 +209,8 @@ app.get('/errors', async (req, res, next) => {
 });
 
 // AI相关路由
-app.use('/api/ai', require('./routes/aiRoutes'));
+import aiRoutes from './routes/aiRoutes.js';
+app.use('/api/ai', aiRoutes);
 
 // 404处理 - 必须在所有路由之后
 app.use(notFoundHandler);

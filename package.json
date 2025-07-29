@@ -1,5 +1,5 @@
 {
-  "name": "chatlog-web",
+  "name": "chatlog-web-root",
   "version": "1.0.0",
   "description": "Modern Vue.js-based Chat Log Visualization and Management System with AI Analysis",
   "author": "Chatlog Web Team",
@@ -8,18 +8,18 @@
   "scripts": {
     "dev": "./scripts/start-ai.sh --dev",
     "start": "./scripts/start-ai.sh",
-    "build": "npm run build:frontend && npm run build:ai-service",
-    "build:frontend": "cd apps/frontend && npm run build",
-    "build:ai-service": "cd apps/ai-service && npm run build || echo 'AI service build skipped'",
+    "build": "pnpm run build:frontend && pnpm run build:ai-service",
+    "build:frontend": "cd apps/frontend && pnpm run build",
+    "build:ai-service": "cd apps/ai-service && pnpm run build || echo 'AI service build skipped'",
     "install:all": "pnpm install",
-    "clean": "rm -rf apps/*/node_modules node_modules",
+    "clean": "rm -rf apps/*/node_modules node_modules pnpm-lock.yaml",
     "check": "./scripts/start-ai.sh --check",
-    "lint": "cd apps/frontend && npm run lint",
-    "test": "npm run test:frontend && npm run test:ai-service",
-    "test:frontend": "cd apps/frontend && npm run test",
-    "test:ai-service": "cd apps/ai-service && npm run test",
-    "test:watch": "concurrently \"npm run test:frontend -- --watch\" \"npm run test:ai-service -- --watch\"",
-    "test:coverage": "npm run test:frontend -- --coverage && npm run test:ai-service -- --coverage"
+    "lint": "cd apps/frontend && pnpm run lint",
+    "test": "pnpm run test:frontend && pnpm run test:ai-service",
+    "test:frontend": "cd apps/frontend && pnpm run test",
+    "test:ai-service": "cd apps/ai-service && pnpm run test",
+    "test:watch": "concurrently \"pnpm run test:frontend -- --watch\" \"pnpm run test:ai-service -- --watch\"",
+    "test:coverage": "pnpm run test:frontend -- --coverage && pnpm run test:ai-service -- --coverage"
   },
   "repository": {
     "type": "git",
@@ -43,9 +43,27 @@
     "npm": ">=7.0.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-typescript": "^7.27.1",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/eslint-config-standard": "^9.0.1",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/test-utils": "^2.4.6",
+    "concurrently": "^8.2.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
+    "eslint-plugin-vue": "^10.3.0",
+    "jsdom": "^26.1.0",
+    "playwright": "^1.54.1",
+    "prettier": "^3.6.2",
+    "vue-router": "^4.5.1",
+    "vuex": "^4.1.0"
   },
   "dependencies": {
-    "joi": "^17.13.3"
+    "@babel/plugin-transform-runtime": "^7.28.0",
+    "joi": "^17.13.3",
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
   }
 }

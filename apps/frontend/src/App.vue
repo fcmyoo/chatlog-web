@@ -4,10 +4,9 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'App'
-}
+<script setup lang="ts">
+// App.vue - 主应用组件
+// 现在使用 TypeScript + Composition API
 </script>
 
 <style>

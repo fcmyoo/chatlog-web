@@ -1,6 +1,7 @@
-import { config } from '@vue/test-utils'
-import { vi } from 'vitest'
-import { ComponentFixtures } from './fixtures/ComponentFixtures'
+import { config } from '@vue/test-utils';
+import { vi, beforeEach, afterEach, afterAll } from 'vitest'; // 导入 vitest 的全局函数
+import { ComponentFixtures } from './fixtures/ComponentFixtures';
+import { chromium, Page } from 'playwright'; // 导入 Page 类型
 
 // 设置全局测试配置
 config.global.mocks = {
@@ -24,7 +25,7 @@ config.global.mocks = {
     query: {},
     meta: {}
   }
-}
+};
 
 // 全局组件存根
 config.global.stubs = {
@@ -38,44 +39,50 @@ config.global.stubs = {
   'el-loading': true,
   'router-link': true,
   'router-view': true
-}
+};
 
 // 创建全局夹具实例
-const globalFixtures = new ComponentFixtures()
+const globalFixtures = new ComponentFixtures();
 
 // 在每个测试前设置
-beforeEach(() => {
+beforeEach(async () => {
   // 清理之前的模拟
-  vi.clearAllMocks()
+  vi.clearAllMocks();
   
   // 重置夹具
-  globalFixtures.reset()
-})
+  globalFixtures.reset();
+
+  // 初始化 Playwright 的 page 对象
+  global.page = await chromium.launch({ headless: true }).then(browser => browser.newPage()) as Page; // 指定 Page 类型
+});
 
 // 在每个测试后清理
 afterEach(async () => {
   // 清理组件夹具
-  await globalFixtures.cleanup()
-})
+  await globalFixtures.cleanup();
+
+  // 关闭 Playwright 的 page 对象
+  await global.page.close();
+});
 
 // 在所有测试完成后进行最终清理
 afterAll(async () => {
   // 最终清理
-  await globalFixtures.cleanup()
-})
+  await globalFixtures.cleanup();
+});
 
 // 导出全局夹具供测试使用
-export { globalFixtures }
+export { globalFixtures };
 
 // 设置全局错误处理
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('未处理的Promise拒绝:', event.reason)
-})
+  console.error('未处理的Promise拒绝:', event.reason);
+});
 
 // 模拟浏览器API
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query: string) => ({ // 指定 query 类型
     matches: false,
     media: query,
     onchange: null,
@@ -85,7 +92,7 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
-})
+});
 
 // 模拟localStorage
 const localStorageMock = {
@@ -95,10 +102,10 @@ const localStorageMock = {
   clear: vi.fn(),
   length: 0,
   key: vi.fn()
-}
+};
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
-})
+});
 
 // 模拟sessionStorage
 const sessionStorageMock = {
@@ -108,28 +115,28 @@ const sessionStorageMock = {
   clear: vi.fn(),
   length: 0,
   key: vi.fn()
-}
+};
 Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock
-})
+});
 
 // 模拟IntersectionObserver
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
-}))
+}));
 
 // 模拟ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
-}))
+}));
 
 // 设置测试超时
 vi.setConfig({
   testTimeout: 10000
-})
+});
 
-console.log('前端测试环境初始化完成')
+console.log('前端测试环境初始化完成');

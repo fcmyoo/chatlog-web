@@ -1,0 +1,9 @@
+{
+  "modelProvider": "DeepSeek",
+  "deepseek": {
+    "model": "deepseek-reasoner",
+    "apiKey": "test-key-49",
+    "temperature": 1
+  },
+  "updatedAt": "2025-07-24T01:00:58.063Z"
+}

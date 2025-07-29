@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run AI service tests
+        run: |
+          cd apps/ai-service
+          pnpm run test:coverage
+
+      - name: Run frontend tests
+        run: |
+          cd apps/frontend
+          pnpm run test:coverage
+
+      - name: Upload AI service coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          file: apps/ai-service/coverage/lcov.info
+          flags: ai-service
+          name: ai-service-coverage
+          fail_ci_if_error: false
+
+      - name: Upload frontend coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          file: apps/frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false

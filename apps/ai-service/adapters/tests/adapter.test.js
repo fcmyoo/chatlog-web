@@ -1,5 +1,5 @@
-const { initializeAdapterSystem, createQuickAdapter } = require('../index');
-const { Message, ChatOptions } = require('../interfaces/AIModelAdapter');
+import { initializeAdapterSystem, createQuickAdapter } from '../index.js';
+import { Message, ChatOptions } from '../interfaces/AIModelAdapter.js';
 
 describe('适配器测试', () => {
   beforeAll(async () => {

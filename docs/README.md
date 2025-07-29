@@ -11,13 +11,19 @@
 [![ECharts](https://img.shields.io/badge/ECharts-5.6.0-AA344D?style=flat&logo=apache-echarts&logoColor=white)](https://echarts.apache.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=flat)](LICENSE)
 
-[English](README_EN.md) | 简体中文
+English | 简体中文
 
 </div>
 
-## 📖 项目简介
+## 📖 项目简介 | About
+
+**中文简介**
 
 Chatlog Web 是 [chatlog](https://github.com/sjzar/chatlog) 项目的现代化 Web 管理界面，提供了强大的聊天记录可视化分析和管理功能。通过直观的图表和数据分析，帮助用户更好地理解和探索自己的聊天数据。
+
+**English Description**
+
+Chatlog Web is a modern web management interface for the [chatlog](https://github.com/sjzar/chatlog) project, providing powerful chat log visualization analysis and management features. Through intuitive charts and data analysis, it helps users better understand and explore their chat data.
 
 ### ✨ 核心特性
 
@@ -372,18 +378,19 @@ CMD ["nginx", "-g", "daemon off;"]
 - [ECharts](https://echarts.apache.org/) - 专业的数据可视化库
 - [Animate.css](https://animate.style/) - CSS动画库
 
-## 📞 联系我们
+## 📞 联系我们 | Contact Us
 
-- **项目主页**: https://github.com/sinyu1012/chatlog-web
-- **问题报告**: https://github.com/sinyu1012/chatlog-web/issues
-- **功能建议**: https://github.com/sinyu1012/chatlog-web/discussions
+- **项目主页 | Project Homepage**: https://github.com/sinyu1012/chatlog-web
+- **问题报告 | Issue Reports**: https://github.com/sinyu1012/chatlog-web/issues
+- **功能建议 | Feature Suggestions**: https://github.com/sinyu1012/chatlog-web/discussions
 
 ---
 
 <div align="center">
 
 **⭐ 如果这个项目对您有帮助，请给我们一个星标！**
+**⭐ If this project helps you, please give us a star!**
 
 Made with ❤️ by Sinyu
 
-</div> 
+</div>

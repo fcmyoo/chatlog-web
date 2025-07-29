@@ -150,9 +150,8 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useStore } from 'vuex'
 import dayjs from 'dayjs'
 import api from '@/api'
 import { use } from 'echarts/core'
@@ -160,7 +159,11 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, PieChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components'
 import VChart from 'vue-echarts'
+import type { Session, ChatMessage } from '@/types'
+import type { EChartsOption } from 'echarts'
+import { useMainStore } from '@/stores'
 
+// ECharts组件注册
 use([
   CanvasRenderer,
   LineChart,
@@ -171,329 +174,336 @@ use([
   GridComponent
 ])
 
-export default {
-  name: 'Dashboard',
-  components: {
-    VChart
+// Pinia Store
+const mainStore = useMainStore()
+
+// 响应式状态
+const recentChatLogsCount = ref<number>(0)
+const statsLoading = ref<boolean>(false)
+const chartLoading = ref<boolean>(true)
+
+// 计算属性
+const loading = computed(() => mainStore.isLoading || statsLoading.value)
+const contacts = computed(() => mainStore.getContacts)
+const chatrooms = computed(() => mainStore.getChatrooms)
+const sessions = computed(() => mainStore.getSessions)
+
+const contactsCount = computed(() => contacts.value.length)
+const chatroomsCount = computed(() => chatrooms.value.length)
+const sessionsCount = computed(() => sessions.value.length)
+
+// 最近活跃会话数（以会话数代替聊天记录总数）
+const activeSessions = computed(() => {
+  const now = dayjs()
+  const sevenDaysAgo = now.subtract(7, 'day')
+
+  return sessions.value.filter((session: Session) => {
+    if (!session.lastTime) return false
+    const lastTime = dayjs(session.lastTime)
+    return lastTime.isAfter(sevenDaysAgo)
+  }).length
+})
+
+const recentSessions = computed(() => {
+  return sessions.value.slice(0, 10)
+})
+
+// 图表配置类型
+interface ChartOption extends EChartsOption {
+  // 扩展属性可以在这里定义
+}
+
+// 趋势图配置
+const trendChartOption = ref<ChartOption>({
+  backgroundColor: 'transparent',
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: 'rgba(50, 50, 50, 0.8)',
+    borderColor: '#409eff',
+    textStyle: {
+      color: '#fff'
+    }
   },
-  setup () {
-    const store = useStore()
-    const recentChatLogsCount = ref(0)
-    const statsLoading = ref(false)
-    const chartLoading = ref(true)
-
-    const loading = computed(() => store.getters.isLoading || statsLoading.value)
-    const contacts = computed(() => store.getters.getContacts)
-    const chatrooms = computed(() => store.getters.getChatrooms)
-    const sessions = computed(() => store.getters.getSessions)
-
-    const contactsCount = computed(() => contacts.value.length)
-    const chatroomsCount = computed(() => chatrooms.value.length)
-    const sessionsCount = computed(() => sessions.value.length)
-
-    // 最近活跃会话数（以会话数代替聊天记录总数）
-    const activeSessions = computed(() => {
-      const now = dayjs()
-      const sevenDaysAgo = now.subtract(7, 'day')
-
-      return sessions.value.filter(session => {
-        if (!session.lastMessageTime) return false
-        const lastTime = dayjs(session.lastMessageTime)
-        return lastTime.isAfter(sevenDaysAgo)
-      }).length
-    })
-
-    const recentSessions = computed(() => {
-      return sessions.value.slice(0, 10)
-    })
-
-    // 趋势图配置
-    const trendChartOption = ref({
-      backgroundColor: 'transparent',
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(50, 50, 50, 0.8)',
-        borderColor: '#409eff',
-        textStyle: {
-          color: '#fff'
-        }
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    top: '10%',
+    containLabel: true
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: [],
+    axisLine: {
+      lineStyle: {
+        color: '#e1e8f0'
+      }
+    }
+  },
+  yAxis: {
+    type: 'value',
+    axisLine: {
+      lineStyle: {
+        color: '#e1e8f0'
+      }
+    }
+  },
+  series: [
+    {
+      name: '消息数',
+      type: 'line',
+      smooth: true,
+      lineStyle: {
+        width: 3,
+        color: '#409eff'
       },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        top: '10%',
-        containLabel: true
-      },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: [],
-        axisLine: {
-          lineStyle: {
-            color: '#e1e8f0'
-          }
-        }
-      },
-      yAxis: {
-        type: 'value',
-        axisLine: {
-          lineStyle: {
-            color: '#e1e8f0'
-          }
-        }
-      },
-      series: [
-        {
-          name: '消息数',
-          type: 'line',
-          smooth: true,
-          lineStyle: {
-            width: 3,
-            color: '#409eff'
-          },
-          areaStyle: {
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: [
-                {
-                  offset: 0,
-                  color: 'rgba(64, 158, 255, 0.3)'
-                },
-                {
-                  offset: 1,
-                  color: 'rgba(64, 158, 255, 0.05)'
-                }
-              ]
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            {
+              offset: 0,
+              color: 'rgba(64, 158, 255, 0.3)'
+            },
+            {
+              offset: 1,
+              color: 'rgba(64, 158, 255, 0.05)'
             }
-          },
-          data: []
-        }
-      ]
-    })
-
-    // 饼图配置
-    const pieChartOption = ref({
-      backgroundColor: 'transparent',
-      tooltip: {
-        trigger: 'item',
-        backgroundColor: 'rgba(50, 50, 50, 0.8)',
-        borderColor: '#409eff',
-        textStyle: {
-          color: '#fff'
-        },
-        formatter: '{b}: {c} ({d}%)'
-      },
-      legend: {
-        bottom: '0%',
-        left: 'center',
-        itemWidth: 10,
-        itemHeight: 10
-      },
-      series: [
-        {
-          name: '聊天类型',
-          type: 'pie',
-          radius: ['30%', '60%'],
-          center: ['50%', '40%'],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 6,
-            borderColor: '#fff',
-            borderWidth: 2
-          },
-          label: {
-            show: false
-          },
-          emphasis: {
-            label: {
-              show: true,
-              fontSize: 16,
-              fontWeight: 'bold'
-            }
-          },
-          labelLine: {
-            show: false
-          },
-          data: [
-            { value: 1048, name: '文本', itemStyle: { color: '#409eff' } },
-            { value: 735, name: '图片', itemStyle: { color: '#67c23a' } },
-            { value: 580, name: '语音', itemStyle: { color: '#e6a23c' } },
-            { value: 484, name: '其他', itemStyle: { color: '#f56c6c' } }
           ]
         }
+      },
+      data: []
+    }
+  ]
+})
+
+// 饼图配置
+const pieChartOption = ref<ChartOption>({
+  backgroundColor: 'transparent',
+  tooltip: {
+    trigger: 'item',
+    backgroundColor: 'rgba(50, 50, 50, 0.8)',
+    borderColor: '#409eff',
+    textStyle: {
+      color: '#fff'
+    },
+    formatter: '{b}: {c} ({d}%)'
+  },
+  legend: {
+    bottom: '0%',
+    left: 'center',
+    itemWidth: 10,
+    itemHeight: 10
+  },
+  series: [
+    {
+      name: '聊天类型',
+      type: 'pie',
+      radius: ['30%', '60%'],
+      center: ['50%', '40%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 6,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: false
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 16,
+          fontWeight: 'bold'
+        }
+      },
+      labelLine: {
+        show: false
+      },
+      data: [
+        { value: 1048, name: '文本', itemStyle: { color: '#409eff' } },
+        { value: 735, name: '图片', itemStyle: { color: '#67c23a' } },
+        { value: 580, name: '语音', itemStyle: { color: '#e6a23c' } },
+        { value: 484, name: '其他', itemStyle: { color: '#f56c6c' } }
       ]
+    }
+  ]
+})
+
+// 消息类型统计接口
+interface MessageTypeCount {
+  text: number
+  image: number
+  voice: number
+  other: number
+}
+
+// 初始化图表数据
+const initChartData = async (): Promise<void> => {
+  try {
+    // 获取最近7天的聊天记录作为样本
+    const endDate = dayjs()
+    const startDate = endDate.subtract(7, 'day')
+
+    const allLogs: ChatMessage[] = []
+    const activeSessions = sessions.value.slice(0, 5) // 取前5个会话作为样本
+
+    for (const session of activeSessions) {
+      try {
+        const response = await api.getChatLogs({
+          talker: session.id || session.name,
+          time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
+          limit: 200
+        })
+
+        if (response.data && Array.isArray(response.data)) {
+          allLogs.push(...response.data)
+        }
+      } catch (error) {
+        console.warn(`获取会话 ${session.name} 聊天记录失败:`, (error as Error).message)
+      }
+    }
+
+    // 生成趋势数据
+    const dates: string[] = []
+    const data: number[] = []
+    const dailyCount: Record<string, number> = {}
+
+    // 统计每日消息数
+    allLogs.forEach((log: ChatMessage) => {
+      const date = dayjs(log.timestamp).format('YYYY-MM-DD')
+      dailyCount[date] = (dailyCount[date] || 0) + 1
     })
 
-    // 初始化图表数据
-    const initChartData = async () => {
-      try {
-        // 获取最近7天的聊天记录作为样本
-        const endDate = dayjs()
-        const startDate = endDate.subtract(7, 'day')
+    // 生成7天数据
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day')
+      const dateStr = date.format('YYYY-MM-DD')
+      const displayDate = date.format('MM-DD')
 
-        const allLogs = []
-        const activeSessions = sessions.value.slice(0, 5) // 取前5个会话作为样本
-
-        for (const session of activeSessions) {
-          try {
-            const response = await api.getChatLogs({
-              talker: session.id || session.name,
-              time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
-              limit: 200
-            })
-
-            if (response.data && Array.isArray(response.data)) {
-              allLogs.push(...response.data)
-            }
-          } catch (error) {
-            console.warn(`获取会话 ${session.name} 聊天记录失败:`, error.message)
-          }
-        }
-
-        // 生成趋势数据
-        const dates = []
-        const data = []
-        const dailyCount = {}
-
-        // 统计每日消息数
-        allLogs.forEach(log => {
-          const date = dayjs(log.time).format('YYYY-MM-DD')
-          dailyCount[date] = (dailyCount[date] || 0) + 1
-        })
-
-        // 生成7天数据
-        for (let i = 6; i >= 0; i--) {
-          const date = dayjs().subtract(i, 'day')
-          const dateStr = date.format('YYYY-MM-DD')
-          const displayDate = date.format('MM-DD')
-
-          dates.push(displayDate)
-          data.push(dailyCount[dateStr] || 0)
-        }
-
-        trendChartOption.value.xAxis.data = dates
-        trendChartOption.value.series[0].data = data
-
-        // 更新饼图数据
-        const typeCount = {
-          text: 0,
-          image: 0,
-          voice: 0,
-          other: 0
-        }
-
-        allLogs.forEach(log => {
-          const content = log.content || ''
-          if (content.includes('[图片]') || content.includes('image')) {
-            typeCount.image++
-          } else if (content.includes('[语音]') || content.includes('voice')) {
-            typeCount.voice++
-          } else if (content.includes('[视频]') || content.includes('[文件]')) {
-            typeCount.other++
-          } else {
-            typeCount.text++
-          }
-        })
-
-        pieChartOption.value.series[0].data = [
-          { value: typeCount.text, name: '文本', itemStyle: { color: '#409eff' } },
-          { value: typeCount.image, name: '图片', itemStyle: { color: '#67c23a' } },
-          { value: typeCount.voice, name: '语音', itemStyle: { color: '#e6a23c' } },
-          { value: typeCount.other, name: '其他', itemStyle: { color: '#f56c6c' } }
-        ]
-      } catch (error) {
-        console.error('初始化图表数据失败:', error)
-        // 使用模拟数据作为后备
-        const dates = []
-        const data = []
-        for (let i = 6; i >= 0; i--) {
-          const date = dayjs().subtract(i, 'day').format('MM-DD')
-          dates.push(date)
-          data.push(0) // 显示0而不是随机数据
-        }
-
-        trendChartOption.value.xAxis.data = dates
-        trendChartOption.value.series[0].data = data
-      } finally {
-        chartLoading.value = false
-      }
+      dates.push(displayDate)
+      data.push(dailyCount[dateStr] || 0)
     }
 
-    // 获取一个样本聊天记录统计
-    const fetchSampleChatLogs = async () => {
-      if (sessions.value.length === 0) {
-        recentChatLogsCount.value = 0
-        return
-      }
-
-      statsLoading.value = true
-      try {
-        // 获取最近3天的数据作为样本
-        const endDate = dayjs()
-        const startDate = endDate.subtract(3, 'day')
-
-        // 获取第一个活跃会话的聊天记录
-        const activeSession = sessions.value.find(s => s.lastMessageTime) || sessions.value[0]
-        if (activeSession) {
-          const response = await api.getChatLogs({
-            talker: activeSession.id || activeSession.name,
-            time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
-            limit: 500
-          })
-
-          recentChatLogsCount.value = response.data.length
-        }
-      } catch (error) {
-        console.error('获取样本聊天记录失败:', error)
-        recentChatLogsCount.value = 0
-      } finally {
-        statsLoading.value = false
-      }
+    if (trendChartOption.value.xAxis && 'data' in trendChartOption.value.xAxis) {
+      (trendChartOption.value.xAxis as any).data = dates
+    }
+    if (trendChartOption.value.series && Array.isArray(trendChartOption.value.series)) {
+      (trendChartOption.value.series[0] as any).data = data
     }
 
-    const formatTime = (time) => {
-      return dayjs(time).format('YYYY-MM-DD HH:mm')
+    // 更新饼图数据
+    const typeCount: MessageTypeCount = {
+      text: 0,
+      image: 0,
+      voice: 0,
+      other: 0
     }
 
-    onMounted(async () => {
-      try {
-        // 先获取基础数据
-        await Promise.all([
-          store.dispatch('fetchContacts'),
-          store.dispatch('fetchChatrooms'),
-          store.dispatch('fetchSessions')
-        ])
-
-        // 然后获取样本聊天记录
-        await fetchSampleChatLogs()
-
-        // 最后初始化图表数据（使用真实数据）
-        await initChartData()
-      } catch (error) {
-        console.error('初始化Dashboard失败:', error)
+    allLogs.forEach((log: ChatMessage) => {
+      const content = log.content || ''
+      if (content.includes('[图片]') || content.includes('image')) {
+        typeCount.image++
+      } else if (content.includes('[语音]') || content.includes('voice')) {
+        typeCount.voice++
+      } else if (content.includes('[视频]') || content.includes('[文件]')) {
+        typeCount.other++
+      } else {
+        typeCount.text++
       }
     })
 
-    return {
-      loading,
-      contactsCount,
-      chatroomsCount,
-      sessionsCount,
-      activeSessions,
-      recentChatLogsCount,
-      recentSessions,
-      formatTime,
-      chartLoading,
-      trendChartOption,
-      pieChartOption
+    if (pieChartOption.value.series && Array.isArray(pieChartOption.value.series)) {
+      (pieChartOption.value.series[0] as any).data = [
+        { value: typeCount.text, name: '文本', itemStyle: { color: '#409eff' } },
+        { value: typeCount.image, name: '图片', itemStyle: { color: '#67c23a' } },
+        { value: typeCount.voice, name: '语音', itemStyle: { color: '#e6a23c' } },
+        { value: typeCount.other, name: '其他', itemStyle: { color: '#f56c6c' } }
+      ]
     }
+  } catch (error) {
+    console.error('初始化图表数据失败:', error)
+    // 使用模拟数据作为后备
+    const dates: string[] = []
+    const data: number[] = []
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day').format('MM-DD')
+      dates.push(date)
+      data.push(0) // 显示0而不是随机数据
+    }
+
+    if (trendChartOption.value.xAxis && 'data' in trendChartOption.value.xAxis) {
+      (trendChartOption.value.xAxis as any).data = dates
+    }
+    if (trendChartOption.value.series && Array.isArray(trendChartOption.value.series)) {
+      (trendChartOption.value.series[0] as any).data = data
+    }
+  } finally {
+    chartLoading.value = false
   }
 }
+
+// 获取一个样本聊天记录统计
+const fetchSampleChatLogs = async (): Promise<void> => {
+  if (sessions.value.length === 0) {
+    recentChatLogsCount.value = 0
+    return
+  }
+
+  statsLoading.value = true
+  try {
+    // 获取最近3天的数据作为样本
+    const endDate = dayjs()
+    const startDate = endDate.subtract(3, 'day')
+
+    // 获取第一个活跃会话的聊天记录
+    const activeSession = sessions.value.find((s: Session) => s.lastTime) || sessions.value[0]
+    if (activeSession) {
+      const response = await api.getChatLogs({
+        talker: activeSession.id || activeSession.name,
+        time: `${startDate.format('YYYY-MM-DD')}~${endDate.format('YYYY-MM-DD')}`,
+        limit: 500
+      })
+
+      recentChatLogsCount.value = response.data.length
+    }
+  } catch (error) {
+    console.error('获取样本聊天记录失败:', error)
+    recentChatLogsCount.value = 0
+  } finally {
+    statsLoading.value = false
+  }
+}
+
+// 时间格式化函数
+const formatTime = (time: string | undefined): string => {
+  return time ? dayjs(time).format('YYYY-MM-DD HH:mm') : ''
+}
+
+// 组件挂载
+onMounted(async () => {
+  try {
+    // 先获取基础数据
+    await Promise.all([
+      mainStore.fetchContacts(),
+      mainStore.fetchChatrooms(),
+      mainStore.fetchSessions()
+    ])
+
+    // 然后获取样本聊天记录
+    await fetchSampleChatLogs()
+
+    // 最后初始化图表数据（使用真实数据）
+    await initChartData()
+  } catch (error) {
+    console.error('初始化Dashboard失败:', error)
+  }
+})
 </script>
 
 <style scoped>

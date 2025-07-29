@@ -7,37 +7,64 @@
       "DOM.Iterable",
       "ES6"
     ],
-    "allowJs": true,
+    "allowJs": false, // 禁用JavaScript文件，强制使用TypeScript
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler", // 使用bundler模式以支持Vite
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@/types/*": ["src/types/*"],
+      "@/api/*": ["src/api/*"],
+      "@/components/*": ["src/components/*"],
+      "@/views/*": ["src/views/*"],
+      "@/stores/*": ["src/stores/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/styles/*": ["src/styles/*"]
     },
     "types": [
-      "node",
-      "vitest/globals"
-    ]
+      "element-plus/global"
+    ],
+    "verbatimModuleSyntax": false, // 使用宽松的模块语法以兼容现有代码
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.tsx",
+    "src/**/*.tsx", 
     "src/**/*.vue",
-    "src/**/*.js",
-    "src/**/*.jsx"
+    "src/types/global.d.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "**/*.js", // 排除所有JavaScript文件
+    "**/*.jsx"
   ],
-  "compileOnSave": false
+  "compileOnSave": false,
+  "references": [
+    { "path": "./tsconfig.node.json" }
+  ]
 }
