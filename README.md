@@ -6,6 +6,8 @@
 
 **基于 Vue.js 的聊天记录可视化管理系统**
 
+免责申明：本项目中不存在任何破解数据的代码与教程，只有 UI 代码用于学习。所有数据与服务均由用户自行提供完成。因使用本项目所产生的任何风险和后果由用户自行承担。
+
 [![Vue](https://img.shields.io/badge/Vue.js-3.3.0-4FC08D?style=flat&logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![Element Plus](https://img.shields.io/badge/Element%20Plus-2.3.0-409EFF?style=flat&logo=element&logoColor=white)](https://element-plus.org/)
 [![ECharts](https://img.shields.io/badge/ECharts-5.6.0-AA344D?style=flat&logo=apache-echarts&logoColor=white)](https://echarts.apache.org/)
