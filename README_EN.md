@@ -14,6 +14,12 @@ A read-only conversation archive viewer that connects to [chatlog](https://githu
 
 Use an existing chatlog HTTP service, or import already-decrypted WeChat 4.x SQLite files in **Data sources**. SQLite WASM runs inside a browser worker; this feature neither invokes key-extraction tools nor uploads chat data. All seven archive views share the selected source.
 
+### Support for wcdb-key-tool output
+
+Chatlog Web supports importing **already-decrypted WeChat 4.x SQLite databases** independently prepared by the user with [TANGandXUE/wcdb-key-tool](https://github.com/TANGandXUE/wcdb-key-tool), provided their schemas match the current adapter. Select its output directory or multiple `.db` files in **Data sources**; no chatlog HTTP backend is required. The files must still form a consistent, WAL-checkpointed plaintext snapshot from a single account.
+
+**This is output-data compatibility, not direct tool integration or execution.** Chatlog Web does not install or invoke wcdb-key-tool, read key or passphrase files, access the WeChat process, or decrypt databases. Compatibility depends on schema detection and the import report. Automated tests use synthetic SQLite fixtures only; they do not establish compatibility with the tool's real output on every platform or WeChat version.
+
 ![Local import report using fictional SQLite fixtures](images/wcdb/sources.png)
 
 <details>
