@@ -6,7 +6,7 @@
   <p>简体中文 · <a href="README_EN.md">English</a> · <a href="UI-REDESIGN.md">设计与实现</a> · <a href="LOCAL-TEST-REPORT.md">本地档案验证</a></p>
 </div>
 
-Chatlog Web 是聊天档案阅读器，支持连接 [chatlog](https://github.com/sjzar/chatlog) HTTP 服务，或导入用户自行准备的已解密微信 4.x SQLite 数据库。新版以纸白与松绿色为主，提供统一的七个业务页面、数据来源管理、深色模式和移动端布局。
+Chatlog Web 是聊天档案阅读器，支持连接 [chatlog](https://github.com/sjzar/chatlog) HTTP 服务，或导入用户自行准备的已解密微信 4.x SQLite 数据库，**包括 [TANGandXUE/wcdb-key-tool](https://github.com/TANGandXUE/wcdb-key-tool) 生成且符合当前适配表结构的明文数据库**。本项目只读取其输出数据，不集成或调用该工具。新版以纸白与松绿色为主，提供统一的七个业务页面、数据来源管理、深色模式和移动端布局。
 
 > **免责声明：** 本项目不包含数据破解代码或教程，不调用密钥提取工具。数据以及可选的后端服务由使用者自行提供，请仅处理有权访问的数据。界面为只读档案，不会发送聊天消息。
 
