@@ -58,6 +58,12 @@ Chatlog Web 是聊天档案阅读器，支持连接 [chatlog](https://github.com
 
 **连接 chatlog HTTP 服务**，或在「数据来源」中**导入已经解密的本地微信 4.x SQLite 数据库**。本地解析在浏览器 Worker 中运行，不调用密钥提取工具，不上传聊天数据。联系人、会话、多分片消息、搜索、统计与媒体引用使用同一套页面。
 
+### 支持 wcdb-key-tool 输出的数据
+
+支持导入由 [TANGandXUE/wcdb-key-tool](https://github.com/TANGandXUE/wcdb-key-tool) 在用户自行操作后生成、且符合当前适配表结构的**已解密微信 4.x SQLite 数据库**。在「数据来源」中选择输出目录或多个 `.db` 文件即可，无需启动 chatlog HTTP 服务；导入前仍需确认文件是同一账号、已合并 WAL 的一致明文快照。
+
+**支持的是输出数据，不是直接集成或使用该工具。** Chatlog Web 不安装或调用 wcdb-key-tool，不读取密钥或口令文件，不访问微信进程，也不执行数据库解密。具体兼容性以表结构探测和解析报告为准；自动测试仅覆盖合成 SQLite 样本，不代表已验证该工具在所有平台、所有微信版本上的真实输出。
+
 ![本地数据库导入与覆盖报告，虚构数据运行截图](images/wcdb/sources.png)
 
 <details><summary>本地聊天、媒体与移动端</summary>
